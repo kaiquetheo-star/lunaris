@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunaris Sessions</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; background-color: #000; font-family: 'VT323', monospace; overflow: hidden; color: #fff; }
+        
+        /* SISTEMA DE VÍDEO DUPLO (Crossfade) */
+        .bg-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
+        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1.5s ease-in-out; opacity: 0; }
+        video.active { opacity: 1; z-index: 1; }
+
+        /* CAMADA DE INTERFACE */
+        .ui-layer { 
+            position: relative; 
+            z-index: 10; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            pointer-events: none; 
+            transition: opacity 1s ease-in-out; 
+        }
+        .ui-layer.cutscene-ativa { opacity: 0; pointer-events: none !important; }
+        .ui-layer * { pointer-events: auto; }
+
+        /* CABEÇALHO */
+        .header-bar { display: flex; justify-content: space-between; padding: 15px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
+        .wallet { font-size: 24px; color: #ffd700; display: flex; align-items: center; gap: 8px; }
+
+        /* STATUS LONGOS */
+        .status-panel { padding: 0 20px; width: calc(100% - 40px); }
+        .stat-row { display: flex; align-items: center; margin-bottom: 6px; gap: 10px; width: 100%; }
+        .stat-label { font-size: 14px; color: #d8b4fe; min-width: 45px; text-shadow: 1px 1px 2px #000; }
+        .bar-bg { flex-grow: 1; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.5s; box-shadow: 0 0 8px currentColor; }
+
+        /* TIMER HUD */
+        .timer-hud { margin-top: 20px; text-align: center; }
+        .timer-display { font-size: 60px; color: #d8b4fe; text-shadow: 0 0 10px #b026ff, 2px 2px 4px #000; }
+        .btn-main { background: rgba(176, 38, 255, 0.3); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 10px 25px; font-family: 'VT323', monospace; font-size: 20px; border-radius: 6px; cursor: pointer; backdrop-filter: blur(4px); transition: 0.3s; }
+        .btn-main:hover { background: rgba(176, 38, 255, 0.6); }
+
+        /* MIXER BASE */
+        .mixer-dock { margin-top: auto; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+        .mixer-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        input[type=range] { flex-grow: 1; -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ff26a5; cursor: pointer; box-shadow: 0 0 10px #ff26a5; }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: #150a21; border: 1px solid #ff26a5; padding: 25px; border-radius: 12px; width: 85%; max-width: 450px; max-height: 80vh; overflow-y: auto; color: #fff; }
+        .loja-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; margin-bottom: 12px; border-radius: 8px; border-left: 3px solid #b026ff; }
+        
+        #diario-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; justify-content: center; align-items: end; }
+        .papel-carta { background: #f4e4bc; color: #2c1a0b; width: 100%; height: 85vh; padding: 40px 30px; border-top-left-radius: 30px; border-top-right-radius: 30px; font-family: 'Dancing Script', cursive; font-size: 24px; line-height: 1.6; overflow-y: auto; transform: translateY(100%); transition: transform 0.6s ease; box-shadow: 0 -10px 50px rgba(0,0,0,0.5); }
+        #aviso-sistema { position: absolute; top: 110px; width: 100%; text-align: center; color: #ff26a5; font-size: 20px; opacity: 0; transition: 0.5s; z-index: 50; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <audio id="audio-chuva" src="chuva.mp3" loop></audio>
+    <audio id="audio-ronronar" src="ronronar.mp3" loop></audio>
+    <audio id="audio-lofi"></audio>
+
+    <div class="bg-container">
+        <video id="videoA" class="active" autoplay loop muted playsinline src="vibe.mp4"></video>
+        <video id="videoB" autoplay loop muted playsinline src=""></video>
+    </div>
+
+    <div id="aviso-sistema">Aviso</div>
+
+    <div id="main-ui" class="ui-layer">
+        <div class="header-bar">
+            <div class="wallet">🪙 <span id="display-moedas">0</span></div>
+            <button class="btn-main" style="font-size: 14px; padding: 5px 15px;" onclick="abrirLoja()">LOJA & DIÁRIO</button>
+        </div>
+
+        <div class="status-panel">
+            <div class="stat-row"><div class="stat-label">VIBE</div><div class="bar-bg"><div class="bar-fill" id="bar-vibe" style="background:#ff26a5;"></div></div></div>
+            <div class="stat-row"><div class="stat-label">SONO</div><div class="bar-bg"><div class="bar-fill" id="bar-sono" style="background:#26d0ff;"></div></div></div>
+            <div class="stat-row"><div class="stat-label">FOME</div><div class="bar-bg"><div class="bar-fill" id="bar-fome" style="background:#ffb826;"></div></div></div>
+        </div>
+
+        <div class="timer-hud">
+            <div id="status-texto" style="font-size: 14px; color: #a87ffb; margin-bottom: -5px;">PRONTO?</div>
+            <div class="timer-display" id="tempo">25:00</div>
+            <button class="btn-main" id="btn-acao" onclick="toggleFocus()">INICIAR FOCO</button>
+        </div>
+
+        <div class="mixer-dock">
+            <div class="mixer-row"><span>🌧️</span><input type="range" value="50" oninput="ajustarVol('chuva', this.value)"></div>
+            <div class="mixer-row"><span>🐱</span><input type="range" id="vol-ronrono" value="0" oninput="ajustarVol('ronronar', this.value)"></div>
+            <div class="mixer-row"><span>🎧</span><input type="range" value="30" oninput="ajustarVol('lofi', this.value)"></div>
+            <div id="now-playing" style="font-size: 12px; opacity: 0.6; text-align: right; margin-top:5px;">Fita #1</div>
+        </div>
+    </div>
+
+    <div id="loja-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: #ff26a5; margin-top: 0; border-bottom: 1px solid #3b1b63; padding-bottom: 10px;">🛒 Loja & Diário</h2>
+            <div class="loja-item">
+                <span>Dar Sachê 🐟<br><small>Enche a FOME (+40%)</small></span>
+                <button class="btn-main" style="font-size: 16px;" onclick="comprarSache()">20 🪙</button>
+            </div>
+            <div class="loja-item">
+                <span>Nova Fita 📼<br><small>Adiciona música</small></span>
+                <button class="btn-main" style="font-size: 16px;" onclick="comprarMusica()">100 🪙</button>
+            </div>
+            <h3 style="color: #26d0ff; margin-top: 20px;">Páginas do Diário</h3>
+            <div id="area-compra-diario"></div>
+            <div id="diario-lido" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"></div>
+            <button class="btn-main" style="width:100%; background: #333; margin-top: 20px; border:none;" onclick="fecharLoja()">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="diario-overlay">
+        <div class="papel-carta" id="papel-conteudo">
+            <button style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:30px; cursor:pointer;" onclick="fecharPaginaDiario()">X</button>
+            <div id="texto-diario-final"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÕES E ESTADO ---
+        const VIDEO_SPEED = 0.6;
+        const TEMPO_CICLO = 25 * 60;
+        
+        let moedas = parseInt(localStorage.getItem('lunaris_moedas')) || 0;
+        let paginasDesbloqueadas = parseInt(localStorage.getItem('lunaris_paginas')) || 0;
+        let stats = { 
+            vibe: parseInt(localStorage.getItem('lunaris_vibe')) || 100, 
+            sono: parseInt(localStorage.getItem('lunaris_sono')) || 100, 
+            fome: parseInt(localStorage.getItem('lunaris_fome')) || 100 
+        };
+
+        let tempoRestante = TEMPO_CICLO;
+        let timerIntervalo = null;
+        let emFoco = false;
+
+        const baseTracks = ['track1.mp3', 'track2.mp3', 'track3.mp3', 'track4.mp3'];
+        let unlockedTracks = JSON.parse(localStorage.getItem('lunaris_tracks')) || [];
+        let playlist = [...baseTracks, ...unlockedTracks];
+        let currentTrackIndex = 0;
+
+        const audios = {
+            chuva: document.getElementById('audio-chuva'),
+            ronronar: document.getElementById('audio-ronronar'),
+            lofi: document.getElementById('audio-lofi')
+        };
+
+        const paginasDiario = [
+            { custo: 30, texto: "Dia 1. A chuva não para faz semanas. Não sei o que pesa mais, o céu cinza lá fora ou o silêncio insuportável aqui dentro. Hoje, deixei a janela entreaberta para sentir o vento e ele entrou. Um gato preto, com olhos de lua. Ele não miou, não pediu nada. Só deitou na minha coberta roxa e dormiu. Acho que nós dois estávamos precisando de um lugar seguro." },
+            { custo: 40, texto: "Dia 12. A depressão é um bicho estranho. Ela te convence de que você é invisível e te rouba a vontade de levantar da cama. Mas o Lunaris não deixa. Ele me acorda todos os dias empurrando o potinho vazio pelo chão. Levantar para alimentar ele me obriga a ficar de pé. É um passo pequeno, eu sei. Mas hoje, foi o suficiente." },
+            { custo: 50, texto: "Dia 28. Coloquei um disco antigo pra tocar hoje. Fazia meses que eu não ouvia música, desde que tudo aconteceu. O Lunaris pulou no parapeito da janela e ficou balançando o rabo no ritmo dos graves. A dor no peito ainda está aqui, latejando devagar... mas pela primeira vez em muito tempo, o apartamento não pareceu tão vazio." },
+            { custo: 60, texto: "Dia 45. Encontrei meu caderno de composições debaixo da cama hoje. O Lunaris sentou em cima dele antes que eu pudesse fechar. Escrevi apenas três frases sobre o tom de roxo que o céu fica às seis da tarde. Minhas mãos tremeram, mas ele começou a ronronar tão alto que o medo diminuiu. Acho que ele gosta de poesia." },
+            { custo: 70, texto: "Dia 60. Tive uma recaída hoje. O peso nas costas voltou e o silêncio pareceu amargo de novo. Fiquei horas olhando para a parede. Então senti algo macio no meu rosto. O Lunaris trouxe aquele ratinho de feltro velho e o soltou no meu travesseiro. Ele não sabe o que é depressão, mas ele sabe quando eu preciso de um amigo. Levantei só para brincar com ele." },
+            { custo 80, texto: "Dia 85. A chuva finalmente deu uma trégua e um raio de sol pálido cortou o tapete. O Lunaris perseguiu a poeira dançando na luz como se fosse a coisa mais importante do universo. Fiquei observando e percebi que também estou aprendendo a caçar meus próprios raios de sol. O EP está ganhando corpo. As batidas agora soam como batimentos cardíacos." },
+            { custo 90, texto: "Dia 110. Terminei a faixa principal hoje. Batizei de 'Orbital'. Enquanto eu mixava os sintetizadores, o Lunaris dormia em cima da minha placa de som. O calor dos aparelhos e o som lo-fi parecem o habitat natural dele. Pela primeira vez em um ano, não me sinto sozinha neste quarto. Somos uma banda de dois." },
+            { custo 100, texto: "Dia 135. Olhei no espelho e vi que meus olhos estão um pouco mais brilhantes. O Lunaris estava ao meu lado, refletido também. Ele é o guardião dos meus segredos e o coautor da minha paz. A música que antes era um grito de dor, agora é um abraço morno. O quarto roxo não é mais uma gaiola; me sinto pronta para explorar o que tem lá fora agora." },
+        ];
+
+        // --- INICIALIZAÇÃO ---
+        audios.lofi.src = playlist[0];
+        let vA = document.getElementById('videoA'); 
+        let vB = document.getElementById('videoB'); 
+        vA.playbackRate = VIDEO_SPEED;
+
+        function mostrarAviso(txt) {
+            const av = document.getElementById('aviso-sistema');
+            av.innerText = txt; av.style.opacity = 1;
+            setTimeout(() => av.style.opacity = 0, 3000);
+        }
+
+        function ajustarVol(tipo, valor) {
+            audios[tipo].volume = valor / 100;
+            if (audios[tipo].paused && audios[tipo].volume > 0) audios[tipo].play();
+        }
+
+        document.addEventListener('click', () => { 
+            Object.values(audios).forEach(a => { if(a.volume > 0) a.play(); }); 
+        }, { once: true });
+
+        audios.lofi.addEventListener('ended', () => {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            audios.lofi.src = playlist[currentTrackIndex];
+            document.getElementById('now-playing').innerText = "Fita #" + (currentTrackIndex + 1);
+            audios.lofi.play();
+        });
+
+        function trocarCena(novaSrc) {
+            vB.src = novaSrc; vB.playbackRate = VIDEO_SPEED; vB.load();
+            vB.onloadeddata = () => { 
+                vB.classList.add('active'); vA.classList.remove('active'); 
+                let temp = vA; vA = vB; vB = temp; 
+            };
+        }
+
+        function atualizarUI() {
+            document.getElementById('display-moedas').innerText = moedas;
+            document.getElementById('bar-vibe').style.width = stats.vibe + '%';
+            document.getElementById('bar-sono').style.width = stats.sono + '%';
+            document.getElementById('bar-fome').style.width = stats.fome + '%';
+            
+            localStorage.setItem('lunaris_moedas', moedas);
+            localStorage.setItem('lunaris_paginas', paginasDesbloqueadas);
+            localStorage.setItem('lunaris_vibe', stats.vibe);
+            localStorage.setItem('lunaris_sono', stats.sono);
+            localStorage.setItem('lunaris_fome', stats.fome);
+        }
+
+        function atualizarRelogio() {
+            let m = Math.floor(tempoRestante / 60); 
+            let s = tempoRestante % 60;
+            document.getElementById('tempo').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // --- SISTEMA DE FOCO ---
+        function toggleFocus() {
+            if (!emFoco) {
+                emFoco = true;
+                document.getElementById('btn-acao').innerText = "DESISTIR";
+                document.getElementById('status-texto').innerText = "LUNARIS DORMINDO...";
+                trocarCena("dormindo.mp4");
+                
+                // Toca ronrono se o volume estiver setado
+                if(audios.ronronar.volume > 0) audios.ronronar.play();
+
+                timerIntervalo = setInterval(() => {
+                    tempoRestante--;
+                    atualizarRelogio();
+                    if (tempoRestante <= 0) finalizar();
+                }, 1000);
+            } else {
+                // Desistir
+                location.reload(); 
+            }
+        }
+
+        function finalizar() {
+            clearInterval(timerIntervalo);
+            timerIntervalo = null;
+            emFoco = false;
+            
+            moedas += 25; // Recompensa de 1 moeda por minuto
+            stats.sono = Math.min(100, stats.sono + 50);
+            stats.vibe = Math.min(100, stats.vibe + 20);
+            tempoRestante = TEMPO_CICLO;
+            
+            atualizarRelogio();
+            atualizarUI();
+            
+            document.getElementById('btn-acao').innerText = "NOVO CICLO";
+            document.getElementById('status-texto').innerText = "PRONTO?";
+            
+            // Para o ronrono
+            audios.ronronar.pause();
+            audios.ronronar.currentTime = 0;
+            
+            trocarCena("vibe.mp4");
+            mostrarAviso("+25 Moedas ganhas!");
+        }
+
+        // --- LOJA E DIÁRIO ---
+        function renderizarLoja() {
+            const areaCompra = document.getElementById('area-compra-diario');
+            const areaLido = document.getElementById('diario-lido');
+            areaCompra.innerHTML = ''; areaLido.innerHTML = '';
+            
+            for (let i = 0; i < paginasDesbloqueadas; i++) {
+                areaLido.innerHTML += `<button class="btn-main" style="font-size:14px; width:100%; margin-bottom:5px;" onclick="abrirPagina(${i})">📖 Ler Página ${i+1}</button>`;
+            }
+            
+            if (paginasDesbloqueadas < paginasDiario.length) {
+                let p = paginasDiario[paginasDesbloqueadas];
+                areaCompra.innerHTML = `<div class="loja-item"><span>Página ${paginasDesbloqueadas+1}</span><button class="btn-main" onclick="comprarPagina(${p.custo})">${p.custo} 🪙</button></div>`;
+            }
+        }
+
+        function abrirLoja() { renderizarLoja(); document.getElementById('loja-modal').style.display = 'flex'; }
+        function fecharLoja() { document.getElementById('loja-modal').style.display = 'none'; }
+
+        function comprarSache() {
+            if (moedas >= 20) {
+                moedas -= 20; stats.fome = Math.min(100, stats.fome + 40);
+                atualizarUI(); fecharLoja();
+                
+            if (navigator.vibrate) {
+            navigator.vibrate(200); // Vibra por 200 milissegundos
+        }
+                const ui = document.getElementById('main-ui');
+                ui.classList.add('cutscene-ativa');
+                trocarCena("comendo.mp4");
+                
+                setTimeout(() => {
+                    trocarCena("vibe.mp4");
+                    ui.classList.remove('cutscene-ativa');
+                }, 6000);
+            } else { mostrarAviso("Moedas insuficientes!"); }
+        }
+
+        function comprarMusica() {
+            if (moedas >= 100) {
+                moedas -= 100;
+                let nova = 'track' + (playlist.length + 1) + '.mp3';
+                playlist.push(nova);
+                localStorage.setItem('lunaris_tracks', JSON.stringify(playlist.slice(4)));
+                mostrarAviso("Nova fita adicionada!");
+                atualizarUI(); fecharLoja();
+            } else { mostrarAviso("Moedas insuficientes!"); }
+        }
+
+        function comprarPagina(custo) {
+            if (moedas >= custo) {
+                moedas -= custo; paginasDesbloqueadas++;
+                mostrarAviso("Nova página desbloqueada!");
+                atualizarUI(); renderizarLoja();
+            } else { mostrarAviso("Moedas insuficientes!"); }
+        }
+
+        function abrirPagina(i) {
+            fecharLoja();
+            document.getElementById('texto-diario-final').innerText = paginasDiario[i].texto;
+            const overlay = document.getElementById('diario-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => document.getElementById('papel-conteudo').style.transform = 'translateY(0)', 10);
+        }
+
+        function fecharPaginaDiario() {
+            document.getElementById('papel-conteudo').style.transform = 'translateY(100%)';
+            setTimeout(() => document.getElementById('diario-overlay').style.display = 'none', 600);
+        }
+
+        // --- DRENO DE STATUS ---
+        setInterval(() => { 
+            if(!emFoco){ 
+                stats.fome = Math.max(0, stats.fome - 1); 
+                stats.sono = Math.max(0, stats.sono - 1); 
+                stats.vibe = Math.max(0, stats.vibe - 1); 
+                atualizarUI(); 
+            } 
+        }, 60000);
+
+        atualizarUI(); 
+        atualizarRelogio();
+    </script>
+</body>
+</html>
