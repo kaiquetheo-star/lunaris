@@ -32,8 +32,32 @@ let medals = JSON.parse(localStorage.getItem('lun_medals')) || { plant: false, f
 
 function saveMedals() { localStorage.setItem('lun_medals', JSON.stringify(medals)); }
 
+// playlist logic for lofi tracks
+const playlist = ['track1.mp3', 'track2.mp3', 'track3.mp3', 'track4.mp3'];
+let currentTrackIndex = 0;
+
+function iniciarAudio() {
+    const lofi = document.getElementById('audio-lofi');
+    const chuva = document.getElementById('audio-chuva');
+    const ronrono = document.getElementById('audio-ronrono');
+    
+    // playlist cycle for lofi
+    lofi.src = playlist[currentTrackIndex];
+    lofi.addEventListener('ended', () => {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        lofi.src = playlist[currentTrackIndex];
+        lofi.play().catch(()=>{});
+    });
+
+    // …rest of the existing initialization…
+}
+
 // Função global de clique
-function playClick() { document.getElementById('click-sfx').play().catch(()=>{}); }
+function playClick() {
+    const sfx = document.getElementById('click-sfx');
+    sfx.currentTime = 0;
+    sfx.play().catch(()=>{});
+}
 
 // ==========================================
 // 3. SISTEMA PRINCIPAL E AUDIO
@@ -50,6 +74,14 @@ function iniciarAudio() {
     const chuva = document.getElementById('audio-chuva');
     const ronrono = document.getElementById('audio-ronrono');
     
+    // playlist cycle for lofi
+    lofi.src = playlist[currentTrackIndex];
+    lofi.addEventListener('ended', () => {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        lofi.src = playlist[currentTrackIndex];
+        lofi.play().catch(()=>{});
+    });
+
     // Inicia todas as tracks (volumes baseados nos sliders)
     lofi.volume = document.getElementById('vol-lofi').value / 100;
     chuva.volume = document.getElementById('vol-chuva').value / 100;
@@ -83,9 +115,13 @@ function atualizarUI() {
 }
 
 // Sliders de Volume
-document.getElementById('vol-chuva').addEventListener('input', (e) => { document.getElementById('audio-chuva').volume = e.target.value / 100; });
-document.getElementById('vol-lofi').addEventListener('input', (e) => { document.getElementById('audio-lofi').volume = e.target.value / 100; });
-document.getElementById('vol-ronrono').addEventListener('input', (e) => { document.getElementById('audio-ronrono').volume = e.target.value / 100; });
+['chuva','lofi','ronrono'].forEach(id => {
+    const slider = document.getElementById('vol-' + id);
+    const audio = document.getElementById('audio-' + id);
+    const handler = (e) => { audio.volume = e.target.value / 100; };
+    slider.addEventListener('input', handler);
+    slider.addEventListener('change', handler);
+});
 
 // A REGRA DE OURO DO LUNARIS (Sem som de clique no gato)
 document.getElementById('lunaris-sprite').addEventListener('click', () => {
