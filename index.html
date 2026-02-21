@@ -16,6 +16,9 @@
 
     <div id="game-container">
         <div id="bg-room"></div>
+        
+        <div id="rain-layer"></div>
+
         <img id="lunaris-sprite" src="lunaris_idle.png" alt="Lunaris" draggable="false">
 
         <div id="effects-layer">
@@ -41,27 +44,27 @@
 
             <div id="coins-display">🪙 <span id="coin-count">0</span></div>
 
-            <div id="mixer-dock">
-                <div class="mixer-control">🌧️ <input type="range" id="vol-chuva" min="0" max="100" value="50"></div>
-                <div class="mixer-control">🐱 <input type="range" id="vol-ronrono" min="0" max="100" value="30"></div>
-                <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="50"></div>
+            <div id="bottom-dock">
+                <div id="mixer-dock">
+                    <div class="mixer-control">🌧️ <input type="range" id="vol-chuva" min="0" max="100" value="50"></div>
+                    <div class="mixer-control">🐱 <input type="range" id="vol-ronrono" min="0" max="100" value="30"></div>
+                    <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="50"></div>
+                </div>
+                <button id="santuario-btn">🕍 SANTUÁRIO</button>
             </div>
-
-            <button id="santuario-btn">🕍 SANTUÁRIO</button>
         </div>
     </div>
 
     <div id="modal-overlay" class="hidden">
         <div id="modal-content">
             <button id="close-modal">X</button>
-            <div id="modal-body">
-                </div>
+            <div id="modal-body"></div>
         </div>
     </div>
 
-    <audio id="audio-chuva" src="mp4/chuva.mp3" loop></audio>
-    <audio id="audio-ronrono" src="mp4/ronrono.mp3" loop></audio>
-    <audio id="audio-lofi" loop></audio>
+    <audio id="audio-chuva" src="chuva.mp3" loop></audio>
+    <audio id="audio-ronrono" src="ronronar.mp3" loop></audio>
+    <audio id="audio-lofi" src="track1.mp3" loop></audio>
     <audio id="click-sfx" src="click.mp3"></audio>
 
     <script src="script.js"></script>
