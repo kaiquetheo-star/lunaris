@@ -1,615 +1,69 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lunaris Sessions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lunaris Echoes</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=VT323&display=swap" rel="stylesheet">
-    <style>
-        /* ESTILO DA SPLASH SCREEN */
-#splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #0d0614; /* Roxo bem escuro */
-    z-index: 9999; /* Fica na frente de TUDO */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: opacity 1.5s ease-in-out, visibility 1.5s;
-}
-
-.splash-content {
-    text-align: center;
-}
-
-#splash-logo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    box-shadow: 0 0 30px #b026ff;
-    animation: pulse-logo 2s infinite ease-in-out;
-    margin-bottom: 20px;
-}
-
-#splash-title {
-    font-family: 'Dancing Script', cursive;
-    font-size: 48px;
-    color: #ff26a5;
-    text-shadow: 0 0 15px #ff26a5;
-    margin: 0;
-}
-
-.splash-subtitle {
-    font-size: 18px;
-    color: #d8b4fe;
-    opacity: 0.8;
-    margin-top: 10px;
-    letter-spacing: 2px;
-}
-
-/* BARRA DE CARREGAMENTO FICTÍCIA */
-.loading-bar-container {
-    width: 200px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 20px auto;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.loading-bar-fill {
-    width: 0%;
-    height: 100%;
-    background: #b026ff;
-    box-shadow: 0 0 10px #b026ff;
-    animation: fill-bar 2.5s forwards;
-}
-
-/* ANIMAÇÕES */
-@keyframes pulse-logo {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 20px #b026ff; }
-    50% { transform: scale(1.05); box-shadow: 0 0 40px #ff26a5; }
-}
-
-@keyframes fill-bar {
-    0% { width: 0%; }
-    100% { width: 100%; }
-}
-
-/* Classe para esconder a splash */
-.hide-splash {
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-        /* RESET E FIX DO RETÂNGULO AZUL */
-        * { -webkit-tap-highlight-color: transparent; outline: none; }
-        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; background-color: #000; font-family: 'VT323', monospace; overflow: hidden; color: #fff; }
-
-        .bg-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1.2s ease-in-out; opacity: 0; filter: brightness(0.95) contrast(1.1) saturate(1.2) drop-shadow(0 0 40px #b026ff44) drop-shadow(0 0 80px #ff26a544) hue-rotate(20deg) blur(0.5px); mix-blend-mode: lighten; }
-        video.active { opacity: 1; z-index: 1; }
-
-        /* Retro overlay: scanlines + noise */
-        .retro-overlay {
-            pointer-events: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 2;
-            background:
-                repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px, transparent 6px),
-                url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2"/></filter><rect width="100" height="100" filter="url(%23noise)"/></svg>');
-            opacity: 0.18;
-            mix-blend-mode: lighten;
-        }
-
-        /* Floating particles */
-        .particle {
-            position: absolute;
-            pointer-events: none;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #fff 60%, #b026ff 100%);
-            opacity: 0.18;
-            z-index: 3;
-            box-shadow: 0 0 8px #ff26a5, 0 0 2px #fff;
-            animation: floatParticle 8s linear infinite;
-        }
-        @keyframes floatParticle {
-            0% { transform: translateY(0) scale(1); opacity: 0.18; }
-            50% { transform: translateY(-60px) scale(1.2); opacity: 0.28; }
-            100% { transform: translateY(-120px) scale(1); opacity: 0.18; }
-        }
-
-        /* Breathing neon glow for timer and bars */
-        @keyframes neonPulse {
-            0% { filter: drop-shadow(0 0 8px #b026ff) brightness(1.1); }
-            50% { filter: drop-shadow(0 0 18px #ff26a5) brightness(1.3); }
-            100% { filter: drop-shadow(0 0 8px #b026ff) brightness(1.1); }
-        }
-        .timer-display, .bar-fill {
-            animation: neonPulse 2.8s ease-in-out infinite;
-        }
-
-        .ui-layer { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100vh; pointer-events: none; transition: opacity 0.8s; }
-        .ui-layer.cutscene-ativa { opacity: 0; }
-        .ui-layer * { pointer-events: auto; }
-
-        .header-bar { display: flex; justify-content: space-between; padding: 15px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
-        .wallet { font-size: 24px; color: #ffd700; display: flex; align-items: center; gap: 8px; }
-
-        .status-panel { padding: 0 20px; width: calc(100% - 40px); }
-        .stat-row { display: flex; align-items: center; margin-bottom: 6px; gap: 10px; }
-        .stat-label { font-size: 14px; color: #d8b4fe; min-width: 45px; text-shadow: 1px 1px 2px #000; }
-        .bar-bg { flex-grow: 1; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; }
-        .bar-fill { height: 100%; width: 100%; transition: width 0.5s; box-shadow: 0 0 8px currentColor; }
-
-        .timer-hud { margin-top: 20px; text-align: center; }
-        .timer-display { font-size: 60px; color: #d8b4fe; text-shadow: 0 0 10px #b026ff, 2px 2px 4px #000; }
-
-        /* Button hover/click effects */
-        .btn-main {
-            background: rgba(176, 38, 255, 0.3);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: #fff;
-            padding: 10px 25px;
-            font-family: 'VT323', monospace;
-            font-size: 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: box-shadow 0.3s, transform 0.2s, background 0.2s;
-            box-shadow: 0 0 8px #b026ff44;
-        }
-        .btn-main:hover, .btn-main:focus {
-            background: rgba(176, 38, 255, 0.5);
-            box-shadow: 0 0 18px #ff26a5, 0 0 8px #fff;
-            transform: scale(1.07);
-        }
-        .btn-main:active {
-            background: rgba(176, 38, 255, 0.7);
-            box-shadow: 0 0 24px #ff26a5, 0 0 12px #fff;
-            transform: scale(0.98);
-        }
-
-        .mixer-dock { margin-top: auto; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
-        .mixer-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
-        input[type=range] { flex-grow: 1; -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 2px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ff26a5; cursor: pointer; }
-
-        /* MODAIS E MEDALHAS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: #150a21; border: 1px solid #ff26a5; padding: 25px; border-radius: 12px; width: 85%; max-width: 450px; max-height: 85vh; overflow-y: auto; color: #fff; }
-        .loja-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; margin-bottom: 12px; border-radius: 8px; border-left: 3px solid #b026ff; }
-        
-        .medal-container { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; }
-        .medal-icon { width: 45px; height: 45px; opacity: 0.2; filter: grayscale(1); transition: 0.5s; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; background: #2a114d; }
-        .medal-icon.unlocked { opacity: 1; filter: grayscale(0); border-color: #ffd700; box-shadow: 0 0 10px #ffd700; background: #4a1d8a; }
-
-        #diario-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; justify-content: center; align-items: end; }
-        .papel-carta { background: #f4e4bc; color: #2c1a0b; width: 100%; height: 85vh; padding: 40px 30px; border-top-left-radius: 30px; border-top-right-radius: 30px; font-family: 'Dancing Script', cursive; font-size: 24px; line-height: 1.6; overflow-y: auto; transform: translateY(100%); transition: transform 0.6s ease; }
-        #aviso-sistema { position: absolute; top: 110px; width: 100%; text-align: center; color: #ff26a5; font-size: 20px; opacity: 0; transition: 0.5s; z-index: 50; pointer-events: none; }
-    </style>
 </head>
 <body>
-    <div id="splash-screen">
-    <div class="splash-content">
-        <img src="logo.png" id="splash-logo" alt="Lunaris Echoes Logo">
-        <h1 id="splash-title">Lunaris Echoes</h1>
-        <div class="loading-bar-container">
-            <div class="loading-bar-fill"></div>
-        </div>
-        <p class="splash-subtitle">Aconchegue-se...</p>
-    </div>
-</div>
-    <audio id="audio-chuva" src="chuva.mp3" loop></audio>
-    <audio id="audio-ronronar" src="ronronar.mp3" loop></audio>
-    <audio id="audio-lofi"></audio>
 
-    <div class="bg-container">
-        <video id="videoA" class="active" autoplay loop muted playsinline src="vibe.mp4"></video>
-        <video id="videoB" loop muted playsinline src=""></video>
-        <!-- Floating particles container -->
-        <div id="particle-container"></div>
-        <!-- Retro overlay -->
-        <div class="retro-overlay"></div>
-    </div>
-    <script>
-        // LÓGICA DA SPLASH SCREEN
-window.addEventListener('load', () => {
-    // Espera 3 segundos para dar tempo do usuário ver a arte e os vídeos carregarem
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        splash.classList.add('hide-splash');
-        
-        // Opcional: Inicia a música automaticamente após a splash sumir
-        if(typeof iniciarPlaylist === 'function') {
-            iniciarPlaylist();
-        }
-    }, 3500);
-});
-      // Floating particles system (lightweight)
-        const particleContainer = document.getElementById('particle-container');
-        const PARTICLE_COUNT = 24;
-        function spawnParticles() {
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.left = Math.random() * 98 + 'vw';
-                p.style.top = (Math.random() * 80 + 10) + 'vh';
-                p.style.animationDelay = (Math.random() * 8) + 's';
-                p.style.opacity = 0.12 + Math.random() * 0.18;
-                particleContainer.appendChild(p);
-            }
-        }
-        spawnParticles();
-    </script>
-
-    <div id="aviso-sistema">Aviso</div>
-
-    <div id="main-ui" class="ui-layer">
-        <div class="header-bar">
-            <div class="wallet">🪙 <span id="display-moedas">0</span></div>
-            <button class="btn-main" style="font-size: 22px; padding: 5px 18px; margin-right: 10px; background:rgba(255,38,165,0.18);" onclick="fazerCarinho()">🐾 FAZER CARINHO</button>
-            <button class="btn-main" style="font-size: 14px; padding: 5px 15px;" onclick="abrirLoja()">LOJA & DIÁRIO</button>
-        </div>
-    <style>
-        .carinho-heart {
-            position: absolute;
-            left: 50%;
-            top: 40%;
-            font-size: 48px;
-            color: #ff26a5;
-            opacity: 0.85;
-            pointer-events: none;
-            transform: translate(-50%, -50%) scale(1);
-            animation: carinhoHeart 1.2s cubic-bezier(.4,1.6,.6,1) forwards;
-            z-index: 1000;
-            text-shadow: 0 0 18px #ff26a5, 0 0 8px #fff;
-        }
-        @keyframes carinhoHeart {
-            0% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
-            60% { opacity: 1; transform: translate(-50%, -80%) scale(1.25); }
-            100% { opacity: 0; transform: translate(-50%, -120%) scale(0.8); }
-        }
-    </style>
-    <script>
-        // Petting mechanic: increases vibe, triggers vibration, shows heart
-        function fazerCarinho() {
-            // Increase vibe, but cap at 100
-            stats.vibe = Math.min(100, stats.vibe + 12);
-            atualizarUI();
-            // Haptic feedback
-            if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
-            // Floating heart animation
-            const heart = document.createElement('div');
-            heart.className = 'carinho-heart';
-            heart.innerText = '💖';
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 1200);
-        }
-    </script>
-
-        <div class="status-panel">
-            <div class="stat-row"><div class="stat-label">VIBE</div><div class="bar-bg"><div class="bar-fill" id="bar-vibe" style="background:#ff26a5;"></div></div></div>
-            <div class="stat-row"><div class="stat-label">SONO</div><div class="bar-bg"><div class="bar-fill" id="bar-sono" style="background:#26d0ff;"></div></div></div>
-            <div class="stat-row"><div class="stat-label">FOME</div><div class="bar-bg"><div class="bar-fill" id="bar-fome" style="background:#ffb826;"></div></div></div>
-        </div>
-
-        <div class="timer-hud">
-            <div id="status-texto" style="font-size: 14px; color: #a87ffb; margin-bottom: -5px;">PRONTO?</div>
-            <div class="timer-display" id="tempo">25:00</div>
-            <button class="btn-main" id="btn-acao" onclick="toggleFocus()">INICIAR FOCO</button>
-        </div>
-
-        <div class="mixer-dock">
-            <div class="mixer-row"><span>🌧️</span><input type="range" value="50" oninput="ajustarVol('chuva', this.value)"></div>
-            <div class="mixer-row"><span>🐱</span><input type="range" id="vol-ronrono" value="0" oninput="ajustarVol('ronronar', this.value)"></div>
-            <div class="mixer-row"><span>🎧</span><input type="range" value="30" oninput="ajustarVol('lofi', this.value)"></div>
-            <div id="now-playing" style="font-size: 12px; opacity: 0.6; text-align: right; margin-top:5px;">Tocando: Fita #1</div>
-        </div>
+    <div id="splash">
+        <img id="logo" src="logo.png" alt="Lunaris Echoes">
+        <button id="start-btn">START</button>
     </div>
 
-    <div id="loja-modal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #ff26a5; margin-top: 0; border-bottom: 1px solid #3b1b63; padding-bottom: 10px;">🛒 Loja & Diário</h2>
-            <div class="loja-item"><span>Sachê 🐟</span><button class="btn-main" style="font-size: 16px;" onclick="comprarSache()">20 🪙</button></div>
-            <div class="loja-item"><span>Nova Fita 📼</span><button class="btn-main" style="font-size: 16px;" onclick="comprarMusica()">100 🪙</button></div>
-            
-            <h3 style="color: #26d0ff; margin-top: 20px; font-size: 18px;">🏅 Medalhas</h3>
-            <div class="medal-container" id="medal-list">
-                <div class="medal-icon" id="medal-0">🌱</div>
-                <div class="medal-icon" id="medal-1">🐟</div>
-                <div class="medal-icon" id="medal-2">🎶</div>
-                <div class="medal-icon" id="medal-3">📖</div>
+    <div id="game-container">
+        <div id="bg-room"></div>
+        <img id="lunaris-sprite" src="lunaris_idle.png" alt="Lunaris" draggable="false">
+
+        <div id="effects-layer">
+            <canvas id="dust-canvas"></canvas>
+            <div id="scanlines"></div>
+        </div>
+
+        <div id="ui-layer">
+            <div class="status-container">
+                <div class="stat-item" id="hunger-status">
+                    <span class="stat-label">Fome</span>
+                    <div class="bar-bg"><div id="hunger-bar" class="bar"></div></div>
+                </div>
+                <div class="stat-item" id="vibe-status">
+                    <span class="stat-label">Vibe</span>
+                    <div class="bar-bg"><div id="vibe-bar" class="bar"></div></div>
+                </div>
+                <div class="stat-item" id="sleep-status">
+                    <span class="stat-label">Sono</span>
+                    <div class="bar-bg"><div id="sleep-bar" class="bar"></div></div>
+                </div>
             </div>
 
-            <h3 style="color: #26d0ff; margin-top: 25px;">📖 Diário</h3>
-            <div id="area-compra-diario"></div>
-            <div id="diario-lido" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"></div>
-            <button class="btn-main" style="width:100%; background: #333; margin-top: 20px; border:none;" onclick="fecharLoja()">FECHAR</button>
+            <div id="coins-display">🪙 <span id="coin-count">0</span></div>
+
+            <div id="mixer-dock">
+                <div class="mixer-control">🌧️ <input type="range" id="vol-chuva" min="0" max="100" value="50"></div>
+                <div class="mixer-control">🐱 <input type="range" id="vol-ronrono" min="0" max="100" value="30"></div>
+                <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="50"></div>
+            </div>
+
+            <button id="santuario-btn">🕍 SANTUÁRIO</button>
         </div>
     </div>
 
-    <div id="diario-overlay">
-        <div class="papel-carta" id="papel-conteudo">
-            <button style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:30px; cursor:pointer;" onclick="fecharPaginaDiario()">X</button>
-            <div id="texto-diario-final"></div>
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-content">
+            <button id="close-modal">X</button>
+            <div id="modal-body">
+                </div>
         </div>
     </div>
 
-    <script>
-        const VIDEO_SPEED = 0.6;
-        const TEMPO_CICLO = 25 * 60;
-        
-        let moedas = parseInt(localStorage.getItem('lunaris_moedas')) || 0;
-        let paginasDesbloqueadas = parseInt(localStorage.getItem('lunaris_paginas')) || 0;
-        let sachesDados = parseInt(localStorage.getItem('lunaris_saches')) || 0;
-        let ciclosFeitos = parseInt(localStorage.getItem('lunaris_ciclos')) || 0;
-        let medalhas = JSON.parse(localStorage.getItem('lunaris_medalhas')) || [false, false, false, false];
+    <audio id="audio-chuva" src="mp4/chuva.mp3" loop></audio>
+    <audio id="audio-ronrono" src="mp4/ronrono.mp3" loop></audio>
+    <audio id="audio-lofi" loop></audio>
+    <audio id="click-sfx" src="click.mp3"></audio>
 
-        let stats = { 
-            vibe: parseInt(localStorage.getItem('lunaris_vibe')) || 100, 
-            sono: parseInt(localStorage.getItem('lunaris_sono')) || 100, 
-            fome: parseInt(localStorage.getItem('lunaris_fome')) || 100 
-        };
-
-        let tempoRestante = TEMPO_CICLO;
-        let timerIntervalo = null;
-        let emFoco = false;
-
-        const baseTracks = ['track1.mp3', 'track2.mp3', 'track3.mp3', 'track4.mp3'];
-        let unlockedTracks = JSON.parse(localStorage.getItem('lunaris_tracks')) || [];
-        let playlist = [...baseTracks, ...unlockedTracks];
-        let currentTrackIndex = 0;
-
-        const audios = {
-            chuva: document.getElementById('audio-chuva'),
-            ronronar: document.getElementById('audio-ronronar'),
-            lofi: document.getElementById('audio-lofi')
-        };
-
-        const paginasDiario = [
-            { custo: 30, texto: "Dia 1. A chuva não para faz semanas e sua falta é esmagadora. Não sei o que pesa mais, o céu cinza lá fora ou o silêncio insuportável aqui dentro. Hoje, deixei a janela entreaberta para sentir o vento e ele entrou. Um gato preto, com olhos de lua. Ele não miou, não pediu nada. Só deitou na minha coberta roxa e dormiu. Acho que nós dois estávamos precisando de um lugar seguro." },
-            { custo: 60, texto: "Dia 12. A depressão é um bicho estranho. Ela te convence de que você é invisível e te rouba a vontade de levantar da cama. Mas o Lunaris não deixa. Ele me acorda todos os dias empurrando o potinho vazio pelo chão. Levantar para alimentar ele me obriga a ficar de pé. É um passo pequeno, eu sei. Mas hoje, foi o suficiente." },
-            { custo: 100, texto: "Dia 28. Coloquei um disco antigo pra tocar hoje. Fazia meses que eu não ouvia música, desde que tudo aconteceu. O Lunaris pulou no parapeito da janela e ficou balançando o rabo no ritmo dos graves. A dor no peito ainda está aqui, latejando devagar... mas pela primeira vez em muito tempo, o apartamento não pareceu tão vazio." },
-            { custo: 130, texto: "Dia 45. Encontrei meu caderno de composições debaixo da cama hoje. O Lunaris sentou em cima dele antes que eu pudesse fechar. Escrevi apenas três frases sobre o tom de roxo que o céu fica às seis da tarde. Minhas mãos tremeram, mas ele começou a ronronar tão alto que o medo diminuiu. Acho que ele gosta de poesia." },
-            { custo: 160, texto: "Dia 60. Tive uma recaída hoje. O peso nas costas voltou e o silêncio pareceu amargo de novo. Fiquei horas olhando para a parede. Então senti algo macio no meu rosto. O Lunaris trouxe aquele ratinho de feltro velho e o soltou no meu travesseiro. Ele não sabe o que é depressão, mas ele sabe quando eu preciso de um amigo. Levantei só para brincar com ele." },
-            { custo: 190, texto: "Dia 85. A chuva finalmente deu uma trégua e um raio de sol pálido cortou o tapete. O Lunaris perseguiu a poeira dançando na luz como se fosse a coisa mais importante do universo. Fiquei observando e percebi que também estou aprendendo a caçar meus próprios raios de sol. O EP está ganhando corpo. As batidas agora soam como batimentos cardíacos." },
-            { custo: 250, texto: "Dia 110. Terminei a faixa principal hoje. Batizei de 'Orbital'. Enquanto eu mixava os sintetizadores, o Lunaris dormia em cima da minha placa de som. O calor dos aparelhos e o som lo-fi parecem o habitat natural dele. Pela primeira vez em um ano, não me sinto sozinha neste quarto. Somos uma banda de dois." },
-            { custo: 300, texto: "Olhei no espelho e vi que meus olhos estão um pouco mais brilhantes. O Lunaris estava ao meu lado, refletido também. Ele é o guardião dos meus segredos e o coautor da minha paz. A música que antes era um grito de dor, agora é um abraço morno. O quarto roxo não é mais uma gaiola; é o nosso santuário." }
-        ];
-
-        let vA = document.getElementById('videoA'); 
-        let vB = document.getElementById('videoB'); 
-        vA.playbackRate = VIDEO_SPEED;
-
-        function mostrarAviso(txt) {
-            const av = document.getElementById('aviso-sistema');
-            av.innerText = txt; av.style.opacity = 1;
-            setTimeout(() => av.style.opacity = 0, 3000);
-        }
-
-        function ajustarVol(tipo, valor) {
-            const player = audios[tipo];
-            const v = valor / 100;
-            player.volume = v;
-            localStorage.setItem('lunaris_vol_' + tipo, v);
-            // Sync slider UI if changed programmatically
-            const sliderId = tipo === 'ronronar' ? 'vol-ronrono' : null;
-            if (sliderId && document.getElementById(sliderId)) {
-                document.getElementById(sliderId).value = valor;
-            }
-            if (player.paused && player.volume > 0) player.play().catch(e => {});
-        }
-
-        function trocarCena(novaSrc) {
-            // Prevent unnecessary transition if already showing
-            if (vA.src.includes(novaSrc)) return;
-            // Prepare next video
-            vB.src = novaSrc;
-            vB.playbackRate = VIDEO_SPEED;
-            vB.currentTime = 0;
-            vB.style.transition = 'opacity 1.2s ease-in-out';
-            vB.style.opacity = 0;
-            vB.load();
-            vB.oncanplay = () => {
-                vB.oncanplay = null;
-                vB.play().then(() => {
-                    // Crossfade
-                    vB.classList.add('active');
-                    vA.classList.remove('active');
-                    vB.style.opacity = 1;
-                    vA.style.opacity = 0;
-                    // Swap references after transition
-                    setTimeout(() => {
-                        let temp = vA; vA = vB; vB = temp;
-                        // Clean up inactive video
-                        vB.classList.remove('active');
-                        vB.style.opacity = 0;
-                        vB.src = '';
-                    }, 1200);
-                }).catch(() => {});
-            };
-        }
-
-        function atualizarUI() {
-            document.getElementById('display-moedas').innerText = moedas;
-            document.getElementById('bar-vibe').style.width = stats.vibe + '%';
-            document.getElementById('bar-sono').style.width = stats.sono + '%';
-            document.getElementById('bar-fome').style.width = stats.fome + '%';
-            
-            if(ciclosFeitos >= 1) medalhas[0] = true;
-            if(sachesDados >= 5) medalhas[1] = true;
-            if(unlockedTracks.length >= 1) medalhas[2] = true;
-            if(paginasDesbloqueadas >= 3) medalhas[3] = true;
-
-            medalhas.forEach((m, i) => { if(m) document.getElementById('medal-'+i).classList.add('unlocked'); });
-
-            localStorage.setItem('lunaris_moedas', moedas);
-            localStorage.setItem('lunaris_paginas', paginasDesbloqueadas);
-            localStorage.setItem('lunaris_saches', sachesDados);
-            localStorage.setItem('lunaris_ciclos', ciclosFeitos);
-            localStorage.setItem('lunaris_vibe', stats.vibe);
-            localStorage.setItem('lunaris_sono', stats.sono);
-            localStorage.setItem('lunaris_fome', stats.fome);
-        }
-
-        function toggleFocus() {
-            if (!emFoco) {
-                emFoco = true;
-                document.getElementById('btn-acao').innerText = "DESISTIR";
-                document.getElementById('status-texto').innerText = "LUNARIS DORMINDO...";
-                trocarCena("dormindo.mp4");
-                timerIntervalo = setInterval(() => {
-                    tempoRestante--;
-                    atualizarRelogio();
-                    if (tempoRestante <= 0) finalizar();
-                }, 1000);
-            } else { location.reload(); }
-        }
-
-        function finalizar() {
-            clearInterval(timerIntervalo); timerIntervalo = null; emFoco = false;
-            moedas += 25; ciclosFeitos++; stats.sono = 100; tempoRestante = TEMPO_CICLO;
-            atualizarRelogio(); atualizarUI();
-            document.getElementById('btn-acao').innerText = "NOVO CICLO";
-            document.getElementById('status-texto').innerText = "PRONTO?";
-            trocarCena("vibe.mp4");
-        }
-
-        function comprarSache() {
-            if (moedas >= 20) {
-                moedas -= 20; sachesDados++; stats.fome = 100;
-                atualizarUI(); fecharLoja();
-                if (navigator.vibrate) navigator.vibrate(200);
-                
-                // MUDANÇA AQUI: Texto avisando que está comendo
-                document.getElementById('status-texto').innerText = "LUNARIS COMENDO...";
-                document.getElementById('main-ui').classList.add('cutscene-ativa');
-                trocarCena("comendo.mp4");
-                
-                setTimeout(() => {
-                    trocarCena("vibe.mp4");
-                    document.getElementById('main-ui').classList.remove('cutscene-ativa');
-                    // Fix: Always update status-texto based on current emFoco state
-                    if (emFoco) {
-                        document.getElementById('status-texto').innerText = "LUNARIS DORMINDO...";
-                    } else {
-                        document.getElementById('status-texto').innerText = "PRONTO?";
-                    }
-                }, 6000);
-            } else { mostrarAviso("Moedas insuficientes!"); }
-        }
-
-        function renderizarLoja() {
-            const areaCompra = document.getElementById('area-compra-diario'); const areaLido = document.getElementById('diario-lido');
-            areaCompra.innerHTML = ''; areaLido.innerHTML = '';
-            for (let i = 0; i < paginasDesbloqueadas; i++) { areaLido.innerHTML += `<button class="btn-main" style="font-size:14px; width:100%; margin-bottom:5px;" onclick="abrirPagina(${i})">📖 Página ${i+1}</button>`; }
-            if (paginasDesbloqueadas < paginasDiario.length) {
-                let p = paginasDiario[paginasDesbloqueadas];
-                areaCompra.innerHTML = `<div class="loja-item"><span>Página ${paginasDesbloqueadas+1}</span><button class="btn-main" onclick="comprarPagina(${p.custo})">${p.custo} 🪙</button></div>`;
-            }
-        }
-
-        function abrirLoja() { renderizarLoja(); document.getElementById('loja-modal').style.display = 'flex'; }
-        function fecharLoja() { document.getElementById('loja-modal').style.display = 'none'; }
-        function comprarPagina(custo) { if (moedas >= custo) { moedas -= custo; paginasDesbloqueadas++; atualizarUI(); renderizarLoja(); } }
-        function abrirPagina(i) { fecharLoja(); document.getElementById('texto-diario-final').innerText = paginasDiario[i].texto; document.getElementById('diario-overlay').style.display = 'flex'; setTimeout(() => document.getElementById('papel-conteudo').style.transform = 'translateY(0)', 10); }
-        function fecharPaginaDiario() { document.getElementById('papel-conteudo').style.transform = 'translateY(100%)'; setTimeout(() => document.getElementById('diario-overlay').style.display = 'none', 600); }
-
-        function atualizarRelogio() {
-            let m = Math.floor(tempoRestante / 60); let s = tempoRestante % 60;
-            document.getElementById('tempo').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        }
-
-        // Status drain logic: Fome and Vibe always drain. Sono only drains when not focusing. Managed interval to prevent leaks.
-        let drainInterval = null;
-        function startDrainInterval() {
-            if (drainInterval) clearInterval(drainInterval);
-            drainInterval = setInterval(() => {
-                stats.fome = Math.max(0, stats.fome - 1);
-                stats.vibe = Math.max(0, stats.vibe - 1);
-                if (!emFoco) {
-                    stats.sono = Math.max(0, stats.sono - 1);
-                } // else: optionally replenish sleep
-                atualizarUI();
-                // Always persist stats after update
-                localStorage.setItem('lunaris_vibe', stats.vibe);
-                localStorage.setItem('lunaris_sono', stats.sono);
-                localStorage.setItem('lunaris_fome', stats.fome);
-            }, 60000);
-        }
-        startDrainInterval();
-
-        function iniciarPlaylist() {
-            audios.lofi.src = playlist[currentTrackIndex];
-            // Restore persisted volume or default
-            let v = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
-            if (isNaN(v)) v = 0.3;
-            audios.lofi.volume = v;
-            document.getElementById('now-playing').innerText = "Tocando: Fita #" + (currentTrackIndex + 1);
-            audios.lofi.play().catch(e => {});
-        }
-
-        audios.lofi.addEventListener('ended', () => {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            audios.lofi.src = playlist[currentTrackIndex];
-            // Restore persisted volume
-            let v = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
-            if (isNaN(v)) v = 0.3;
-            audios.lofi.volume = v;
-            document.getElementById('now-playing').innerText = "Tocando: Fita #" + (currentTrackIndex + 1);
-            audios.lofi.play();
-        });
-
-        document.addEventListener('click', () => { 
-            if(audios.lofi.paused) iniciarPlaylist();
-            Object.keys(audios).forEach(key => { if(audios[key].volume > 0) audios[key].play().catch(e => {}); });
-        }, { once: true });
-
-        // Restore audio volumes and sliders on load
-        window.addEventListener('DOMContentLoaded', () => {
-            const volChuva = parseFloat(localStorage.getItem('lunaris_vol_chuva'));
-            if (!isNaN(volChuva)) {
-                audios.chuva.volume = volChuva;
-                document.querySelectorAll('input[type=range]')[0].value = Math.round(volChuva * 100);
-            }
-            const volRonronar = parseFloat(localStorage.getItem('lunaris_vol_ronronar'));
-            if (!isNaN(volRonronar)) {
-                audios.ronronar.volume = volRonronar;
-                document.getElementById('vol-ronrono').value = Math.round(volRonronar * 100);
-            }
-            const volLofi = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
-            if (!isNaN(volLofi)) {
-                audios.lofi.volume = volLofi;
-                document.querySelectorAll('input[type=range]')[2].value = Math.round(volLofi * 100);
-            }
-        });
-
-        // PRÊMIO DIÁRIO
-        function verificarRecompensaDiaria() {
-            const hoje = new Date().toISOString().split('T')[0];
-            const ultima = localStorage.getItem('lunaris_recompensa_data');
-            if (ultima !== hoje) {
-                moedas += 50; localStorage.setItem('lunaris_recompensa_data', hoje);
-                atualizarUI(); setTimeout(() => mostrarAviso(`Presente Diário: +50 🪙 ✨`), 2000);
-            }
-        }
-
-        atualizarUI(); atualizarRelogio(); verificarRecompensaDiaria();
-        // REGISTRO DO SERVICE WORKER
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Lunaris Offline Pronto!', reg))
-            .catch(err => console.log('Erro no Service Worker', err));
-    });
-}
-   </script>
+    <script src="script.js"></script>
 </body>
 </html>
