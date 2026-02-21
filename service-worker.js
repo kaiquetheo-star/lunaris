@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lunaris-v1';
+const CACHE_NAME = 'lunaris-echoes-v1';
 const ASSETS = [
   './',
   './index.html',
