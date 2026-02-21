@@ -1,0 +1,16 @@
+{
+  "name": "Lunaris Sessions",
+  "short_name": "Lunaris",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0d0614",
+  "theme_color": "#b026ff",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
