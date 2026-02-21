@@ -171,19 +171,45 @@
 
         function ajustarVol(tipo, valor) {
             const player = audios[tipo];
-            player.volume = valor / 100;
+            const v = valor / 100;
+            player.volume = v;
+            localStorage.setItem('lunaris_vol_' + tipo, v);
+            // Sync slider UI if changed programmatically
+            const sliderId = tipo === 'ronronar' ? 'vol-ronrono' : null;
+            if (sliderId && document.getElementById(sliderId)) {
+                document.getElementById(sliderId).value = valor;
+            }
             if (player.paused && player.volume > 0) player.play().catch(e => {});
         }
 
         function trocarCena(novaSrc) {
+            // Prevent unnecessary transition if already showing
             if (vA.src.includes(novaSrc)) return;
+            // Prepare next video
             vB.src = novaSrc;
             vB.playbackRate = VIDEO_SPEED;
-            vB.play().then(() => {
-                vB.classList.add('active');
-                vA.classList.remove('active');
-                let temp = vA; vA = vB; vB = temp;
-            }).catch(e => {});
+            vB.currentTime = 0;
+            vB.style.transition = 'opacity 1.2s ease-in-out';
+            vB.style.opacity = 0;
+            vB.load();
+            vB.oncanplay = () => {
+                vB.oncanplay = null;
+                vB.play().then(() => {
+                    // Crossfade
+                    vB.classList.add('active');
+                    vA.classList.remove('active');
+                    vB.style.opacity = 1;
+                    vA.style.opacity = 0;
+                    // Swap references after transition
+                    setTimeout(() => {
+                        let temp = vA; vA = vB; vB = temp;
+                        // Clean up inactive video
+                        vB.classList.remove('active');
+                        vB.style.opacity = 0;
+                        vB.src = '';
+                    }, 1200);
+                }).catch(() => {});
+            };
         }
 
         function atualizarUI() {
@@ -245,8 +271,12 @@
                 setTimeout(() => {
                     trocarCena("vibe.mp4");
                     document.getElementById('main-ui').classList.remove('cutscene-ativa');
-                    // MUDANÇA AQUI: Volta o texto certo dependendo se está focando ou não
-                    document.getElementById('status-texto').innerText = emFoco ? "LUNARIS DORMINDO..." : "PRONTO?";
+                    // Fix: Always update status-texto based on current emFoco state
+                    if (emFoco) {
+                        document.getElementById('status-texto').innerText = "LUNARIS DORMINDO...";
+                    } else {
+                        document.getElementById('status-texto').innerText = "PRONTO?";
+                    }
                 }, 6000);
             } else { mostrarAviso("Moedas insuficientes!"); }
         }
@@ -272,19 +302,31 @@
             document.getElementById('tempo').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        // MUDANÇA AQUI: Dreno de Sono respeita o Foco
-        setInterval(() => { 
-            stats.fome = Math.max(0, stats.fome - 1); 
-            stats.vibe = Math.max(0, stats.vibe - 1); 
-            if(!emFoco) { 
-                stats.sono = Math.max(0, stats.sono - 1); 
-            }
-            atualizarUI(); 
-        }, 60000);
+        // Status drain logic: Fome and Vibe always drain. Sono only drains when not focusing. Managed interval to prevent leaks.
+        let drainInterval = null;
+        function startDrainInterval() {
+            if (drainInterval) clearInterval(drainInterval);
+            drainInterval = setInterval(() => {
+                stats.fome = Math.max(0, stats.fome - 1);
+                stats.vibe = Math.max(0, stats.vibe - 1);
+                if (!emFoco) {
+                    stats.sono = Math.max(0, stats.sono - 1);
+                } // else: optionally replenish sleep
+                atualizarUI();
+                // Always persist stats after update
+                localStorage.setItem('lunaris_vibe', stats.vibe);
+                localStorage.setItem('lunaris_sono', stats.sono);
+                localStorage.setItem('lunaris_fome', stats.fome);
+            }, 60000);
+        }
+        startDrainInterval();
 
         function iniciarPlaylist() {
             audios.lofi.src = playlist[currentTrackIndex];
-            audios.lofi.volume = 0.3;
+            // Restore persisted volume or default
+            let v = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
+            if (isNaN(v)) v = 0.3;
+            audios.lofi.volume = v;
             document.getElementById('now-playing').innerText = "Tocando: Fita #" + (currentTrackIndex + 1);
             audios.lofi.play().catch(e => {});
         }
@@ -292,6 +334,10 @@
         audios.lofi.addEventListener('ended', () => {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
             audios.lofi.src = playlist[currentTrackIndex];
+            // Restore persisted volume
+            let v = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
+            if (isNaN(v)) v = 0.3;
+            audios.lofi.volume = v;
             document.getElementById('now-playing').innerText = "Tocando: Fita #" + (currentTrackIndex + 1);
             audios.lofi.play();
         });
@@ -300,6 +346,25 @@
             if(audios.lofi.paused) iniciarPlaylist();
             Object.keys(audios).forEach(key => { if(audios[key].volume > 0) audios[key].play().catch(e => {}); });
         }, { once: true });
+
+        // Restore audio volumes and sliders on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const volChuva = parseFloat(localStorage.getItem('lunaris_vol_chuva'));
+            if (!isNaN(volChuva)) {
+                audios.chuva.volume = volChuva;
+                document.querySelectorAll('input[type=range]')[0].value = Math.round(volChuva * 100);
+            }
+            const volRonronar = parseFloat(localStorage.getItem('lunaris_vol_ronronar'));
+            if (!isNaN(volRonronar)) {
+                audios.ronronar.volume = volRonronar;
+                document.getElementById('vol-ronrono').value = Math.round(volRonronar * 100);
+            }
+            const volLofi = parseFloat(localStorage.getItem('lunaris_vol_lofi'));
+            if (!isNaN(volLofi)) {
+                audios.lofi.volume = volLofi;
+                document.querySelectorAll('input[type=range]')[2].value = Math.round(volLofi * 100);
+            }
+        });
 
         // PRÊMIO DIÁRIO
         function verificarRecompensaDiaria() {
@@ -312,6 +377,14 @@
         }
 
         atualizarUI(); atualizarRelogio(); verificarRecompensaDiaria();
-    </script>
+        // REGISTRO DO SERVICE WORKER
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('Lunaris Offline Pronto!', reg))
+            .catch(err => console.log('Erro no Service Worker', err));
+    });
+}
+   </script>
 </body>
 </html>
