@@ -4,6 +4,19 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## Configuration
+
+The app expects a Google Gemini/Generative AI API key in order to
+enable the "Improve text with AI" feature. Create a `.env` file at the
+project root (Vite will pick it up automatically) and add:
+
+```env
+VITE_GEMINI_API_KEY=your_api_key_here
+```
+
+Keep the key secret; do not commit `.env` to version control. You can also
+use `GEMINI_API_KEY` in server‑side environments.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
