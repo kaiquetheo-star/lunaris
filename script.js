@@ -5,8 +5,11 @@ function setCatState(stateName, durationMs = 0) {
     const sprite = document.getElementById('lunaris-sprite');
     if (!sprite) return; // safeguard if DOM not ready
 
-    // remove previous state-* classes
-    Array.from(sprite.classList).filter(c => c.startsWith('state-')).forEach(c => sprite.classList.remove(c));
+    // Remove any class starting with 'state-'
+    sprite.className = sprite.className.replace(/\bstate-\S+/g, '');
+    // Force DOM reflow so the CSS animation restarts cleanly
+    void sprite.offsetWidth;
+    // Add new state
     sprite.classList.add('state-' + stateName);
 
     // clear existing timeout so rapid calls don't stack
@@ -15,7 +18,7 @@ function setCatState(stateName, durationMs = 0) {
     if (durationMs > 0) {
         catStateTimeout = setTimeout(() => {
             // revert to resting state
-            Array.from(sprite.classList).filter(c => c.startsWith('state-')).forEach(c => sprite.classList.remove(c));
+            sprite.className = sprite.className.replace(/\bstate-\S+/g, '');
             sprite.classList.add(emFoco ? 'state-sleep' : 'state-idle');
             catStateTimeout = null;
         }, durationMs);
