@@ -1,79 +1,26 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Lunaris Echoes</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-</head>
-<body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Lovable App</title>
+    <meta name="description" content="Lovable Generated Project" />
+    <meta name="author" content="Lovable" />
 
-    <div id="splash">
-        <img id="logo" src="logo.png" alt="Lunaris Echoes">
-        <button id="start-btn">START</button>
-    </div>
+    <!-- TODO: Update og:title to match your application name -->
+    <meta property="og:title" content="Lovable App" />
+    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
-    <div id="game-container">
-        <div id="bg-room"></div>
-        
-        <div id="rain-layer"></div>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
 
-       <div id="lunaris-sprite" class="state-idle"></div>
-        <div id="hitboxes-layer" style="position: absolute; z-index: 10; inset: 0; pointer-events: none;">
-          <div id="book-hitbox" style="position: absolute; bottom: 20%; right: 15%; width: 70px; height: 50px; border: 2px solid red; background: rgba(255,0,0,0.2); pointer-events: auto; cursor: pointer; border-radius: 5px;"></div>
-          <div id="switch-hitbox" style="position: absolute; top: 40%; left: 2%; width: 40px; height: 60px; border: 2px solid yellow; background: rgba(255,255,0,0.2); pointer-events: auto; cursor: pointer;"></div>
-        </div>
-
-        <div id="effects-layer">
-            <canvas id="dust-canvas"></canvas>
-            <div id="scanlines"></div>
-        </div>
-
-        <div id="room-darkness-overlay"></div>
-
-        <div id="ui-layer">
-            <div class="status-container">
-                <div class="stat-item" id="hunger-status">
-                    <span class="stat-label">Fome</span>
-                    <div class="bar-bg"><div id="hunger-bar" class="bar"></div></div>
-                </div>
-                <div class="stat-item" id="vibe-status">
-                    <span class="stat-label">Vibe</span>
-                    <div class="bar-bg"><div id="vibe-bar" class="bar"></div></div>
-                </div>
-                <div class="stat-item" id="sleep-status">
-                    <span class="stat-label">Sono</span>
-                    <div class="bar-bg"><div id="sleep-bar" class="bar"></div></div>
-                </div>
-            </div>
-
-            <div id="coins-display">🪙 <span id="coin-count">0</span></div>
-
-            <div id="bottom-dock">
-                <div id="mixer-dock">
-                    <div class="mixer-control">🌧️ <input type="range" id="vol-chuva" min="0" max="100" value="50"></div>
-                    <div class="mixer-control">🐱 <input type="range" id="vol-ronrono" min="0" max="100" value="30"></div>
-                    <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="50"></div>
-                </div>
-                <button id="santuario-btn">🕍 SANTUÁRIO</button>
-                <button id="sleep-btn">🌙 DORMIR</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-overlay" class="hidden">
-        <div id="modal-content">
-            <button id="close-modal">X</button>
-            <div id="modal-body"></div>
-        </div>
-    </div>
-
-    <audio id="audio-chuva" src="chuva.mp3" loop></audio>
-    <audio id="audio-ronrono" src="ronronar.mp3" loop></audio>
-    <audio id="audio-lofi" src="track1.mp3" loop></audio>
-    <audio id="click-sfx" src="click.mp3" preload="auto"></audio>
-
-    <script src="script.js"></script>
-</body>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
