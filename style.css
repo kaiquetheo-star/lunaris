@@ -1,3 +1,7 @@
+:root {
+  --frame-width: 500px;
+  --frame-height: 500px;
+}
 /* -------- sprite container -------- */
 #lunaris-sprite {
   position: absolute; z-index: 5; bottom: 22%; left: 18%;
