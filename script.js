@@ -1,4 +1,26 @@
-// ==========================================
+// Cat state machine using CSS classes (state-idle, state-lick, state-eat, etc.)
+let catStateTimeout = null;
+
+function setCatState(stateName, durationMs = 0) {
+    const sprite = document.getElementById('lunaris-sprite');
+    if (!sprite) return; // safeguard if DOM not ready
+
+    // remove previous state-* classes
+    Array.from(sprite.classList).filter(c => c.startsWith('state-')).forEach(c => sprite.classList.remove(c));
+    sprite.classList.add('state-' + stateName);
+
+    // clear existing timeout so rapid calls don't stack
+    if (catStateTimeout) { clearTimeout(catStateTimeout); catStateTimeout = null; }
+
+    if (durationMs > 0) {
+        catStateTimeout = setTimeout(() => {
+            // revert to resting state
+            Array.from(sprite.classList).filter(c => c.startsWith('state-')).forEach(c => sprite.classList.remove(c));
+            sprite.classList.add(emFoco ? 'state-sleep' : 'state-idle');
+            catStateTimeout = null;
+        }, durationMs);
+    }
+}
 // 1. DADOS E LORE
 // ==========================================
 const paginasDiario = [
@@ -24,46 +46,6 @@ let stats = {
     coins: parseInt(localStorage.getItem('lun_coins')) || 0
 };
 
-// sprite dictionary for Lunaris states
-const catSprites = {
-    idle: 'lunaris_idle.png',
-    vibe: 'lunaris_vibe.png',
-    sleep: 'lunaris_sleep.png',
-    eat: 'lunaris_eat.png',
-    stretch: 'lunaris_stretch.png',
-    lick: 'lunaris_lick.png',
-    walk: 'lunaris_walk.png'
-};
-
-// internal timeout handle so rapid state changes don't pile up
-let catStateTimeout = null;
-
-/**
- * Change Lunaris' sprite state and optionally revert after a duration.
- * @param {string} stateName - key from catSprites
- * @param {number} durationMs - if >0, state will reset after this many milliseconds
- */
-function setCatState(stateName, durationMs = 0) {
-    const sprite = document.getElementById('lunaris-sprite');
-    if (!sprite) return; // safeguard
-    const src = catSprites[stateName] || catSprites.idle;
-    sprite.style.backgroundImage = "url('" + src + "')";
-
-    // clear any existing timeout so we don't stack
-    if (catStateTimeout) {
-        clearTimeout(catStateTimeout);
-        catStateTimeout = null;
-    }
-
-    if (durationMs > 0) {
-        catStateTimeout = setTimeout(() => {
-            // revert to appropriate resting posture
-            sprite.style.backgroundImage = "url('" + (emFoco ? catSprites.sleep : catSprites.idle) + "')";
-            catStateTimeout = null;
-        }, durationMs);
-    }
-}
-
 
 let paginasDesbloqueadas = parseInt(localStorage.getItem('lun_paginas')) || 1;
 let emFoco = false;
@@ -77,22 +59,6 @@ function saveMedals() { localStorage.setItem('lun_medals', JSON.stringify(medals
 // playlist logic for lofi tracks
 const playlist = ['track1.mp3', 'track2.mp3', 'track3.mp3', 'track4.mp3'];
 let currentTrackIndex = 0;
-
-function iniciarAudio() {
-    const lofi = document.getElementById('audio-lofi');
-    const chuva = document.getElementById('audio-chuva');
-    const ronrono = document.getElementById('audio-ronrono');
-    
-    // playlist cycle for lofi
-    lofi.src = playlist[currentTrackIndex];
-    lofi.addEventListener('ended', () => {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        lofi.src = playlist[currentTrackIndex];
-        lofi.play().catch(()=>{});
-    });
-
-    // …rest of the existing initialization…
-}
 
 // Função global de clique
 function playClick() {
@@ -319,9 +285,8 @@ if (bookHitbox) {
 const switchHitbox = document.getElementById('switch-hitbox');
 if (switchHitbox) {
     switchHitbox.addEventListener('click', () => {
-        playClick();
-        isLightsOn = !isLightsOn;
-        const container = document.getElementById('game-container');
-        container.classList.toggle('lights-out', !isLightsOn);
+        const sfx = document.getElementById('click-sfx');
+        sfx.currentTime = 0; sfx.play().catch(()=>{});
+        document.getElementById('game-container').classList.toggle('lights-out');
     });
 }
