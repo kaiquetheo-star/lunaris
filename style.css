@@ -1,46 +1,68 @@
 :root {
-  --frame-width: 500px;
+  /* Tamanho exato da caixinha de 1 gato no Photopea */
+  --frame-width: 500px; 
   --frame-height: 500px;
 }
-/* -------- sprite container -------- */
+
 #lunaris-sprite {
-  position: absolute; z-index: 5; bottom: 22%; left: 18%;
+  position: absolute;
+  z-index: 5;
+  bottom: 22%;
+  left: 18%;
+  
+  /* Pega a medida da raiz */
   width: var(--frame-width);
   height: var(--frame-height);
-  filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
+  
   cursor: pointer;
-  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
   transform-origin: bottom left;
-  /* ensure no smooth transitions ever interfere */
-  transition: none !important;
+
+  /* ISSO MATA QUALQUER DESLIZE "BIRULEIBE" */
+  transition: none !important; 
 }
 
-/* Fotos Paradas (1 quadro só) */
+/* =========================================
+   ESTADOS PARADOS (FOTO ÚNICA)
+========================================= */
 .state-idle {
-  background-image: url('lunaris_idle.png');
-  /* explicit single‑frame sizing/position */
+  background: url('lunaris_idle.png') no-repeat;
   background-size: var(--frame-width) var(--frame-height);
   background-position: 0 0;
 }
+
 .state-sleep {
-  background-image: url('lunaris_sleep.png');
+  background: url('lunaris_sleep.png') no-repeat;
   background-size: var(--frame-width) var(--frame-height);
   background-position: 0 0;
 }
 
-/* Animações (6 quadros) */
+/* =========================================
+   ESTADOS ANIMADOS (SPRITE COM 6 FOTOS)
+========================================= */
 .state-lick {
-  background-image: url('lunaris_lick.png');
+  background: url('lunaris_lick.png') no-repeat;
   background-size: calc(var(--frame-width) * 6) var(--frame-height);
+  /* A mágica do seu tutorial adaptada aqui: */
   animation: playSprite 1.2s steps(6) infinite;
 }
+
 .state-eat {
-  background-image: url('lunaris_eat.png');
+  background: url('lunaris_eat.png') no-repeat;
   background-size: calc(var(--frame-width) * 6) var(--frame-height);
   animation: playSprite 1.2s steps(6) infinite;
 }
 
-/* …other state‑* animation rules remain unchanged… */
+/* O MOTOR DO TUTORIAL (Adaptado para Horizontal) */
+@keyframes playSprite {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    /* Multiplica a largura por 6 negativamente para puxar a fita pro lado */
+    background-position: calc(var(--frame-width) * -6) 0;
+  }
+}
 
 #game-container { position: relative; width: 100vw; height: 100dvh; } /* match body/html height */
 
