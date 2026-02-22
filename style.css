@@ -2,9 +2,11 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #0a0010; overflow: hidden; font-family: 'Segoe UI', sans-serif; } /* use dynamic viewport height to avoid mobile address bar pushing content */
 
+:root { --cat-size: 380px; }
+
 #game-container { position: relative; width: 100vw; height: 100dvh; } /* match body/html height */
 
-#bottom-dock { position: absolute; bottom: 5%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
+#bottom-dock { position: absolute; bottom: 8%; left: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
 /* TELA DE SPLASH */
 #splash { position: fixed; inset: 0; z-index: 1000; background: #1a0530; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s; }
 #splash.hidden { opacity: 0; pointer-events: none; }
@@ -15,14 +17,26 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #0a
 #game-container { position: relative; width: 100vw; height: 100dvh; } /* match body/html height */
 #bg-room { position: absolute; inset: 0; z-index: 1; background: url('quarto_bg.png') center/cover; }
 
-#lunaris-sprite { 
-    position: absolute; z-index: 5; 
-    width: 380px; height: auto; 
-    bottom: 22%; left: 18%; 
-    filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
-    animation: breathing 4s ease-in-out infinite;
+#room-darkness-overlay {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-in-out;
+}
+
+#game-container.lights-out #room-darkness-overlay { opacity: 0.7; }
+
+#lunaris-sprite {
+    position: absolute; z-index: 5;
+    bottom: 22%; left: 18%;
+    width: var(--cat-size); height: var(--cat-size);
+    background-image: url('lunaris_idle.png');
+    background-size: calc(var(--cat-size) * 6) var(--cat-size);
+    animation: playSprite 1.2s steps(6) infinite;
     cursor: pointer;
-    transition: transform 0.2s;
+    filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
 }
 
 /* STATUS BARS NEON */
@@ -37,12 +51,26 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #0a
 #coins-display { position: absolute; top: 20px; right: 20px; color: #00ffff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00ffff; z-index: 20; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 10px; border: 1px solid #00ffff; }
 
 /* DOCK INFERIOR (Mobile Friendly) */
-#bottom-dock { position: absolute; bottom: 5%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
+#bottom-dock { position: absolute; bottom: 8%; left: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
 #bottom-dock > * { pointer-events: auto; }
 #mixer-dock { background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 12px; border: 1px solid #ff006e; display: flex; gap: 15px; justify-content: center; width: 90%; max-width: 400px; }
 .mixer-control { color: white; font-size: 14px; display: flex; align-items: center; gap: 5px; }
 .mixer-control input { width: 70px; }
 #santuario-btn { padding: 15px 40px; background: linear-gradient(135deg, #00ff00, #008800); color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px #00ff00; font-size: 16px; letter-spacing: 1px; }
+
+/* sleep button neon look */
+#sleep-btn {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #3a005f, #00008b);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 15px #7f00ff;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
 
 /* MODAL DO SANTUÁRIO (CORRIGIDO) */
 #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s; }
@@ -55,12 +83,12 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #0a
 
 /* EFEITO DE CHUVA */
 /* Rain confined to window – adjust percentages to match the window artwork */
-#rain-layer { position: absolute; top: 15%; left: 8%; width: 45%; height: 55%; z-index: 2; pointer-events: none; overflow: hidden; opacity: 0.6; }
+#rain-layer { position: absolute; top: 15%; left: 10%; width: 35%; height: 45%; overflow: hidden; border-radius: 5px; z-index: 2; pointer-events: none; opacity: 0.6; }
 .rain-drop { position: absolute; width: 2px; height: 20px; background: rgba(255, 255, 255, 0.5); animation: fall linear infinite; }
 
 /* ANIMAÇÕES */
 @keyframes fall { 0% { transform: translateY(-100px); } 100% { transform: translateY(100vh); } }
-@keyframes breathing { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+@keyframes playSprite { from { background-position: 0px 0px; } to { background-position: calc(var(--cat-size) * -6) 0px; } }
 @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
 /* Responsividade Mobile */

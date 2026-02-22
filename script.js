@@ -24,8 +24,50 @@ let stats = {
     coins: parseInt(localStorage.getItem('lun_coins')) || 0
 };
 
+// sprite dictionary for Lunaris states
+const catSprites = {
+    idle: 'lunaris_idle.png',
+    vibe: 'lunaris_vibe.png',
+    sleep: 'lunaris_sleep.png',
+    eat: 'lunaris_eat.png',
+    stretch: 'lunaris_stretch.png',
+    lick: 'lunaris_lick.png',
+    walk: 'lunaris_walk.png'
+};
+
+// internal timeout handle so rapid state changes don't pile up
+let catStateTimeout = null;
+
+/**
+ * Change Lunaris' sprite state and optionally revert after a duration.
+ * @param {string} stateName - key from catSprites
+ * @param {number} durationMs - if >0, state will reset after this many milliseconds
+ */
+function setCatState(stateName, durationMs = 0) {
+    const sprite = document.getElementById('lunaris-sprite');
+    if (!sprite) return; // safeguard
+    const src = catSprites[stateName] || catSprites.idle;
+    sprite.style.backgroundImage = "url('" + src + "')";
+
+    // clear any existing timeout so we don't stack
+    if (catStateTimeout) {
+        clearTimeout(catStateTimeout);
+        catStateTimeout = null;
+    }
+
+    if (durationMs > 0) {
+        catStateTimeout = setTimeout(() => {
+            // revert to appropriate resting posture
+            sprite.style.backgroundImage = "url('" + (emFoco ? catSprites.sleep : catSprites.idle) + "')";
+            catStateTimeout = null;
+        }, durationMs);
+    }
+}
+
+
 let paginasDesbloqueadas = parseInt(localStorage.getItem('lun_paginas')) || 1;
 let emFoco = false;
+let isLightsOn = true; // room light state
 let gatoCooldown = false; // Controle de tempo para ganhar moedas
 
 let medals = JSON.parse(localStorage.getItem('lun_medals')) || { plant: false, fish: false, music: false, diary: false };
@@ -123,11 +165,31 @@ function atualizarUI() {
     slider.addEventListener('change', handler);
 });
 
+// sleep/focus toggle button logic
+const sleepBtn = document.getElementById('sleep-btn');
+sleepBtn.addEventListener('click', () => {
+    emFoco = !emFoco;
+    const sprite = document.getElementById('lunaris-sprite');
+    const lofi = document.getElementById('audio-lofi');
+    if (emFoco) {
+        // going to sleep
+        setCatState('sleep');
+        sleepBtn.textContent = '☀️ ACORDAR';
+        sprite.style.filter = 'brightness(0.4)';
+        lofi.pause();
+    } else {
+        // waking up
+        setCatState('stretch', 3000);
+        sleepBtn.textContent = '🌙 DORMIR';
+        sprite.style.filter = '';
+        lofi.play().catch(()=>{});
+    }
+});
+
 // A REGRA DE OURO DO LUNARIS (Sem som de clique no gato)
 document.getElementById('lunaris-sprite').addEventListener('click', () => {
-    const sprite = document.getElementById('lunaris-sprite');
-    sprite.style.transform = "scale(1.05)";
-    setTimeout(() => sprite.style.transform = "scale(1)", 200);
+    // switch to licking animation briefly
+    setCatState('lick', 2000);
 
     // Só recompensa se estiver saudável
     if (stats.hunger >= 90 && stats.vibe >= 90 && stats.sleep >= 90) {
@@ -136,6 +198,7 @@ document.getElementById('lunaris-sprite').addEventListener('click', () => {
             atualizarUI();
             
             // Um toque de feedback visual fofo
+            const sprite = document.getElementById('lunaris-sprite');
             sprite.style.filter = "drop-shadow(0 0 40px #00ff00)";
             setTimeout(() => sprite.style.filter = "drop-shadow(0 0 20px rgba(255, 0, 110, 0.5))", 1000);
             
@@ -184,58 +247,35 @@ function openSantuarioModal() {
         <div class="shop-item"><span>🎵 Nova Fita Lo-Fi - 100 🪙</span><button id="buy-track">Comprar</button></div>
     `;
 
-    const diarySection = document.createElement('div');
-    diarySection.className = 'modal-section';
-    diarySection.innerHTML = `<h2 style="color: #ff00ff;">📖 Diário de Lunaris</h2><div id="diary-pages"></div>`;
-    
-    if (paginasDesbloqueadas < paginasDiario.length) {
-        const proxima = paginasDiario[paginasDesbloqueadas];
-        diarySection.innerHTML += `
-            <div class="shop-item" style="margin-top: 15px;">
-                <span>Desbloquear: "${proxima.titulo}" - ${proxima.custo} 🪙</span>
-                <button id="buy-page">Desbloquear</button>
-            </div>
-        `;
-    }
-
     modalBody.innerHTML = '';
     modalBody.appendChild(shopSection);
-    modalBody.appendChild(diarySection);
-
-    const diaryPagesDiv = document.getElementById('diary-pages');
-    for (let i = 0; i < paginasDesbloqueadas; i++) {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'diary-page unlocked';
-        pageDiv.innerHTML = `<strong style="color:#ff006e;">${paginasDiario[i].titulo}</strong><p>${paginasDiario[i].texto}</p>`;
-        diaryPagesDiv.appendChild(pageDiv);
-    }
 
     // Botões
     document.getElementById('buy-sache').onclick = function() {
         playClick();
-        if (stats.coins >= 20) { stats.coins -= 20; stats.hunger = 100; atualizarUI(); alert('Lunaris alimentado!'); }
-        else { alert('Moedas insuficientes!'); }
+        if (stats.coins >= 20) {
+            stats.coins -= 20;
+            stats.hunger = 100;
+            atualizarUI();
+            setCatState('eat', 5000);
+            alert('Lunaris alimentado!');
+        } else {
+            alert('Moedas insuficientes!');
+        }
     };
 
     document.getElementById('buy-track').onclick = function() {
         playClick();
-        if (stats.coins >= 100) { stats.coins -= 100; medals.music = true; saveMedals(); atualizarUI(); alert('Nova faixa desbloqueada!'); }
-        else { alert('Moedas insuficientes!'); }
+        if (stats.coins >= 100) {
+            stats.coins -= 100;
+            medals.music = true;
+            saveMedals();
+            atualizarUI();
+            alert('Nova faixa desbloqueada!');
+        } else {
+            alert('Moedas insuficientes!');
+        }
     };
-
-    const btnBuyPage = document.getElementById('buy-page');
-    if (btnBuyPage) {
-        btnBuyPage.onclick = function() {
-            playClick();
-            const proxima = paginasDiario[paginasDesbloqueadas];
-            if (stats.coins >= proxima.custo) {
-                stats.coins -= proxima.custo;
-                paginasDesbloqueadas++;
-                atualizarUI();
-                openSantuarioModal(); // Recarrega
-            } else { alert(`Você precisa de ${proxima.custo} moedas!`); }
-        };
-    }
 
     modalOverlay.classList.remove('hidden');
 }
@@ -243,3 +283,45 @@ function openSantuarioModal() {
 santuarioBtn.addEventListener('click', openSantuarioModal);
 closeModalBtn.addEventListener('click', () => { playClick(); modalOverlay.classList.add('hidden'); });
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) { playClick(); modalOverlay.classList.add('hidden'); } });
+
+// diary modal helper
+function openDiaryModal() {
+    playClick();
+    modalBody.innerHTML = '';
+    const diarySection = document.createElement('div');
+    diarySection.className = 'modal-section';
+    diarySection.innerHTML = `<h2 style="color: #ff00ff;">📖 Diário de Lunaris</h2>`;
+    const pagesDiv = document.createElement('div');
+    pagesDiv.id = 'diary-pages';
+    diarySection.appendChild(pagesDiv);
+
+    for (let i = 0; i < paginasDesbloqueadas; i++) {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'diary-page unlocked';
+        pageDiv.innerHTML = `<strong style=\"color:#ff006e;\">${paginasDiario[i].titulo}</strong><p>${paginasDiario[i].texto}</p>`;
+        pagesDiv.appendChild(pageDiv);
+    }
+
+    modalBody.appendChild(diarySection);
+    modalOverlay.classList.remove('hidden');
+}
+
+// hitbox interaction
+const bookHitbox = document.getElementById('book-hitbox');
+if (bookHitbox) {
+    bookHitbox.addEventListener('click', () => {
+        playClick();
+        openDiaryModal();
+    });
+}
+
+// light switch hitbox
+const switchHitbox = document.getElementById('switch-hitbox');
+if (switchHitbox) {
+    switchHitbox.addEventListener('click', () => {
+        playClick();
+        isLightsOn = !isLightsOn;
+        const container = document.getElementById('game-container');
+        container.classList.toggle('lights-out', !isLightsOn);
+    });
+}

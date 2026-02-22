@@ -19,12 +19,18 @@
         
         <div id="rain-layer"></div>
 
-        <img id="lunaris-sprite" src="lunaris_idle.png" alt="Lunaris" draggable="false">
+        <div id="lunaris-sprite"></div>
+        <div id="hitboxes-layer" style="position: absolute; z-index: 10; inset: 0; pointer-events: none;">
+          <div id="book-hitbox" style="position: absolute; bottom: 20%; right: 15%; width: 70px; height: 50px; border: 2px solid red; background: rgba(255,0,0,0.2); pointer-events: auto; cursor: pointer; border-radius: 5px;"></div>
+          <div id="switch-hitbox" style="position: absolute; top: 40%; left: 2%; width: 40px; height: 60px; border: 2px solid yellow; background: rgba(255,255,0,0.2); pointer-events: auto; cursor: pointer;"></div>
+        </div>
 
         <div id="effects-layer">
             <canvas id="dust-canvas"></canvas>
             <div id="scanlines"></div>
         </div>
+
+        <div id="room-darkness-overlay"></div>
 
         <div id="ui-layer">
             <div class="status-container">
@@ -51,6 +57,7 @@
                     <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="50"></div>
                 </div>
                 <button id="santuario-btn">🕍 SANTUÁRIO</button>
+                <button id="sleep-btn">🌙 DORMIR</button>
             </div>
         </div>
     </div>
