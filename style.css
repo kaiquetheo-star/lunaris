@@ -1,178 +1,387 @@
+/* =========================================================================
+   LUNARIS ECHOES - CORE STYLE (v3.0 Final)
+   Arquitetura: Single Spritesheet + Mobile First
+   ========================================================================= */
+
 :root {
-  /* Tamanho exato da caixinha de 1 gato no Photopea */
-  --frame-width: 500px; 
-  --frame-height: 500px;
+  /* DIMENSÕES MATEMÁTICAS DO SPRITE (Não altere a menos que o PNG mude) */
+  --frame-size: 455px;       /* Tamanho de 1 quadro (altura e largura) */
+  --sheet-cols: 6;           /* Quantos quadros na horizontal */
+  
+  /* Largura total da imagem = 455 * 6 = 2730px */
+  --sheet-width: calc(var(--frame-size) * var(--sheet-cols));
+  
+  /* CORES DO TEMA NEON */
+  --neon-pink: #ff006e;
+  --neon-blue: #00ffff;
+  --neon-purple: #bd00ff;
+  --bg-dark: #0a0010;
 }
 
+/* Reset Global */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100dvh; /* Dynamic Viewport Height para celulares */
+  background: var(--bg-dark);
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* =========================================================================
+   1. CAMADAS DO JOGO (LAYER SYSTEM)
+   Ordem de Z-Index é CRUCIAL para os cliques funcionarem
+   ========================================================================= */
+
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* CAMADA 1: Fundo do Quarto */
+#bg-room {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: url('quarto_bg.png') center/cover no-repeat;
+}
+
+/* CAMADA 2: Chuva (Na Janela) */
+#rain-layer {
+  position: absolute;
+  /* Ajuste estes % para encaixar na janela do seu desenho */
+  top: 15%; 
+  left: 10%; 
+  width: 35%; 
+  height: 45%;
+  overflow: hidden;
+  border-radius: 5px;
+  z-index: 2;
+  pointer-events: none; /* Deixa o clique passar para o fundo */
+  opacity: 0.6;
+}
+
+/* CAMADA 3: O Gato (Sprite) */
 #lunaris-sprite {
   position: absolute;
-  z-index: 5;
-  bottom: 22%;
-  left: 18%;
+  z-index: 10; /* Gato acima do fundo e chuva */
   
-  /* Pega a medida da raiz */
-  width: var(--frame-width);
-  height: var(--frame-height);
+  /* Posição no Quarto */
+  bottom: 20%;
+  left: 15%;
   
-  cursor: pointer;
-  filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
-  transform-origin: bottom left;
-
-  /* ISSO MATA QUALQUER DESLIZE "BIRULEIBE" */
-  transition: none !important; 
-}
-
-/* =========================================
-   ESTADOS PARADOS (FOTO ÚNICA)
-========================================= */
-.state-idle {
-  background: url('lunaris_idle.png') no-repeat;
-  background-size: var(--frame-width) var(--frame-height);
-  background-position: 0 0;
-}
-
-.state-sleep {
-  background: url('lunaris_sleep.png') no-repeat;
-  background-size: var(--frame-width) var(--frame-height);
-  background-position: 0 0;
-}
-
-/* =========================================
-   ESTADOS ANIMADOS (SPRITE COM 6 FOTOS)
-========================================= */
-.state-lick {
-  background: url('lunaris_lick.png') no-repeat;
-  background-size: calc(var(--frame-width) * 6) var(--frame-height);
-  /* A mágica do seu tutorial adaptada aqui: */
-  animation: playSprite 1.2s steps(6) infinite;
-}
-
-.state-eat {
-  background: url('lunaris_eat.png') no-repeat;
-  background-size: calc(var(--frame-width) * 6) var(--frame-height);
-  animation: playSprite 1.2s steps(6) infinite;
-}
-
-/* O MOTOR DO TUTORIAL (Adaptado para Horizontal) */
-@keyframes playSprite {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    /* Multiplica a largura por 6 negativamente para puxar a fita pro lado */
-    background-position: calc(var(--frame-width) * -6) 0;
-  }
-}
-
-#game-container { position: relative; width: 100vw; height: 100dvh; } /* match body/html height */
-
-#bottom-dock { position: absolute; bottom: 8%; left: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
-/* TELA DE SPLASH */
-#splash { position: fixed; inset: 0; z-index: 1000; background: #1a0530; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s; }
-#splash.hidden { opacity: 0; pointer-events: none; }
-#logo { width: 250px; animation: pulse 2s infinite; }
-#start-btn { margin-top: 40px; padding: 15px 40px; background: #ff006e; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #ff006e; }
-
-/* CAMADAS DO JOGO */
-#game-container { position: relative; width: 100vw; height: 100dvh; } /* match body/html height */
-#bg-room { position: absolute; inset: 0; z-index: 1; background: url('quarto_bg.png') center/cover; }
-
-#room-darkness-overlay { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; z-index: 15; }
-
-#switch-hitbox { z-index: 50; pointer-events: auto; }
-#game-container.lights-out #room-darkness-overlay { opacity: 0.75; }
-
-#lunaris-sprite {
-  position: absolute; z-index: 5; bottom: 22%; left: 18%;
-  width: var(--frame-width);
-  height: var(--frame-height);
-  filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.5));
-  cursor: pointer;
+  /* Tamanho da Caixa de Exibição (Viewport do Sprite) */
+  width: var(--frame-size);
+  height: var(--frame-size);
+  
+  /* Configuração da Imagem */
+  background-image: url('spritesheet.png'); /* SEU ARQUIVO ÚNICO DO FIGMA */
   background-repeat: no-repeat;
+  
+  /* A largura do background deve ser a largura total da tira */
+  background-size: var(--sheet-width) auto; 
+  
+  /* Renderização e Transformação */
+  image-rendering: pixelated; 
+  transition: none !important; /* IMPORTANTE: Remove deslize suave */
   transform-origin: bottom left;
+  transform: scale(0.6); /* Ajuste visual inicial para PC */
+  cursor: pointer;
+  filter: drop-shadow(0 0 15px rgba(255, 0, 110, 0.4));
 }
 
-/* Fotos Paradas (1 quadro só) */
-.state-idle { background-image: url('lunaris_idle.png'); background-size: cover; background-position: center; }
-.state-sleep { background-image: url('lunaris_sleep.png'); background-size: cover; background-position: center; }
-
-/* Animações (6 quadros) */
-.state-lick {
-  background-image: url('lunaris_lick.png');
-  background-size: calc(var(--frame-width) * 6) var(--frame-height);
-  animation: playSprite 1.2s steps(6) infinite;
+/* CAMADA 4: Objetos Interativos e Luz */
+#hitboxes-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none; /* Container invisível não bloqueia cliques */
 }
+/* Os filhos (botões invisíveis) devem receber cliques */
+#hitboxes-layer > div, #switch-hitbox { 
+  pointer-events: auto; 
+  cursor: pointer; 
+}
+
+/* Interruptor de Luz (Posicione sobre o desenho) */
+#switch-hitbox {
+  position: absolute;
+  top: 40%;
+  left: 2%;
+  width: 50px;
+  height: 70px;
+  z-index: 50; /* Sempre no topo do cenário */
+}
+
+/* Livro (Diário) */
+#book-hitbox {
+  position: absolute;
+  bottom: 25%;
+  right: 15%;
+  width: 80px;
+  height: 60px;
+  /* background: rgba(255,0,0,0.2); Deixe transparente depois de ajustar */
+}
+
+/* CAMADA 5: Escuridão (Luz Apagada) */
+#room-darkness-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none; /* Clicks passam através do escuro */
+  transition: opacity 0.8s ease;
+  z-index: 25; /* Cobre o gato, mas fica abaixo da UI */
+}
+/* Quando a classe .lights-out é ativada pelo JS */
+#game-container.lights-out #room-darkness-overlay {
+  opacity: 0.85;
+}
+
+/* CAMADA 6: Interface de Usuário (UI) */
+#ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none; /* UI container deixa clicar no jogo */
+}
+/* Elementos da UI recebem clique */
+#ui-layer > * { pointer-events: auto; }
+
+/* =========================================================================
+   2. ANIMAÇÃO DO GATO (SPRITE ENGINE)
+   ========================================================================= */
+
+/* Animação Horizontal (Corre a fita do Frame 1 ao 6) */
+@keyframes playSpriteRow {
+  from { background-position-x: 0px; }
+  to   { background-position-x: calc(var(--sheet-width) * -1); }
+}
+
+/* -- ESTADOS (Controlam a linha Vertical Y) -- */
+/* Ajuste os multiplicadores (* -0, * -1) conforme a ordem no seu PNG do Figma */
+
+/* LINHA 1: IDLE */
+.state-idle {
+  background-position-y: 0px; 
+  animation: playSpriteRow 1.5s steps(6) infinite;
+}
+
+/* LINHA 2: SLEEP */
+.state-sleep {
+  background-position-y: calc(var(--frame-size) * -1); 
+  animation: playSpriteRow 2s steps(6) infinite;
+}
+
+/* LINHA 3: EAT */
 .state-eat {
-  background-image: url('lunaris_eat.png');
-  background-size: calc(var(--frame-width) * 6) var(--frame-height);
-  animation: playSprite 1.2s steps(6) infinite;
+  background-position-y: calc(var(--frame-size) * -2); 
+  animation: playSpriteRow 1s steps(6) infinite;
 }
 
-@keyframes playSprite {
-  100% { background-position: calc(var(--frame-width) * -6) 0px; }
+/* LINHA 4: LICK */
+.state-lick {
+  background-position-y: calc(var(--frame-size) * -3); 
+  animation: playSpriteRow 1.2s steps(6) infinite;
 }
 
-/* STATUS BARS NEON */
-.status-container { position: absolute; top: 20px; left: 20px; z-index: 20; }
-.stat-label { color: #fff; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; text-shadow: 0 0 5px #ff006e; font-weight: bold; }
-.bar-bg { width: 180px; height: 12px; background: rgba(0,0,0,0.5); border: 1px solid #ff006e; border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
-.bar { height: 100%; width: 100%; transition: width 0.5s; }
-#hunger-bar { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
-#vibe-bar { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
-#sleep-bar { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
+/* LINHA 5: STRETCH */
+.state-stretch {
+  background-position-y: calc(var(--frame-size) * -4); 
+  animation: playSpriteRow 1.2s steps(6) infinite;
+}
 
-#coins-display { position: absolute; top: 20px; right: 20px; color: #00ffff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00ffff; z-index: 20; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 10px; border: 1px solid #00ffff; }
+/* LINHA 6: WALK / VIBE */
+.state-vibe {
+  background-position-y: calc(var(--frame-size) * -5); 
+  animation: playSpriteRow 1.2s steps(6) infinite;
+}
 
-/* DOCK INFERIOR (Mobile Friendly) */
-#bottom-dock { position: absolute; bottom: 8%; left: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; z-index: 20; pointer-events: none; } /* raised slightly for mobile browser UI */
-#bottom-dock > * { pointer-events: auto; }
-#mixer-dock { background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 12px; border: 1px solid #ff006e; display: flex; gap: 15px; justify-content: center; width: 90%; max-width: 400px; }
-.mixer-control { color: white; font-size: 14px; display: flex; align-items: center; gap: 5px; }
-.mixer-control input { width: 70px; }
-#santuario-btn { padding: 15px 40px; background: linear-gradient(135deg, #00ff00, #008800); color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px #00ff00; font-size: 16px; letter-spacing: 1px; }
+/* =========================================================================
+   3. ESTILOS DA INTERFACE (UI)
+   ========================================================================= */
 
-/* sleep button neon look */
+/* Barras de Status */
+.status-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row { display: flex; align-items: center; gap: 10px; }
+.stat-label { 
+  color: #fff; font-size: 10px; font-weight: bold; width: 40px; text-transform: uppercase; text-shadow: 0 0 5px var(--neon-pink);
+}
+
+.bar-bg {
+  width: 150px; height: 10px; background: rgba(0,0,0,0.6);
+  border: 1px solid var(--neon-purple); border-radius: 5px; overflow: hidden;
+}
+
+.bar { height: 100%; transition: width 0.5s ease; }
+#hunger-bar { background: #ffe600; box-shadow: 0 0 8px #ffe600; }
+#vibe-bar   { background: var(--neon-pink); box-shadow: 0 0 8px var(--neon-pink); }
+#sleep-bar  { background: var(--neon-blue); box-shadow: 0 0 8px var(--neon-blue); }
+
+/* Moedas */
+#coins-display {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: rgba(0,0,0,0.7);
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid var(--neon-blue);
+  color: var(--neon-blue);
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 0 0 5px var(--neon-blue);
+}
+
+/* Dock Inferior (Controles) */
+#bottom-dock {
+  position: absolute;
+  bottom: 5%;
+  left: 0; 
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 15px;
+  padding: 0 20px;
+  pointer-events: none; /* Garante que a área vazia não bloqueie o jogo */
+}
+#bottom-dock > * { pointer-events: auto; } /* Botões clicáveis */
+
+/* Mixer de Som */
+#mixer-dock {
+  background: rgba(10, 0, 20, 0.9);
+  border: 1px solid var(--neon-pink);
+  border-radius: 15px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mixer-control { color: white; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+input[type=range] { accent-color: var(--neon-pink); cursor: pointer; }
+
+/* Botões Principais */
+.game-btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.game-btn:active { transform: scale(0.95); }
+
+#santuario-btn {
+  background: linear-gradient(135deg, #00ff9d, #008055);
+  box-shadow: 0 0 15px #00ff9d;
+  color: #002b15;
+}
+
 #sleep-btn {
-    padding: 15px 40px;
-    background: linear-gradient(135deg, #3a005f, #00008b);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 15px #7f00ff;
-    font-size: 16px;
-    letter-spacing: 1px;
+  background: linear-gradient(135deg, #7b00ff, #3c0080);
+  box-shadow: 0 0 15px #7b00ff;
 }
 
-/* MODAL DO SANTUÁRIO (CORRIGIDO) */
-#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s; }
+/* =========================================================================
+   4. MODAIS E SPLASH SCREEN
+   ========================================================================= */
+
+/* Tela Inicial */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg-dark);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.5s;
+}
+#logo { width: 280px; margin-bottom: 30px; animation: pulse 2s infinite; }
+#start-btn {
+  padding: 15px 50px; background: var(--neon-pink); color: white;
+  border: none; border-radius: 50px; font-size: 20px; font-weight: bold;
+  cursor: pointer; box-shadow: 0 0 20px var(--neon-pink);
+}
+
+/* Modais (Loja/Diário) */
+#modal-overlay {
+  position: fixed; inset: 0; z-index: 5000;
+  background: rgba(0,0,0,0.85);
+  display: flex; justify-content: center; align-items: center;
+  opacity: 1; transition: opacity 0.3s;
+}
 #modal-overlay.hidden { opacity: 0; pointer-events: none; }
-#modal-content { background: #1a0530; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid #ff00ff; border-radius: 15px; padding: 20px; position: relative; color: white; box-shadow: 0 0 40px rgba(255, 0, 255, 0.4); }
-#close-modal { position: absolute; top: 10px; right: 10px; background: #ff006e; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px #ff006e; }
-.modal-section { margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border-left: 3px solid #00ffff; }
-.shop-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.shop-item button { background: #00ffff; border: none; padding: 5px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
 
-/* EFEITO DE CHUVA */
-/* Rain confined to window – adjust percentages to match the window artwork */
-#rain-layer { position: absolute; top: 15%; left: 10%; width: 35%; height: 45%; overflow: hidden; border-radius: 5px; z-index: 2; pointer-events: none; opacity: 0.6; }
-.rain-drop { position: absolute; width: 2px; height: 20px; background: rgba(255, 255, 255, 0.5); animation: fall linear infinite; }
-
-/* ANIMAÇÕES */
-@keyframes fall { 0% { transform: translateY(-100px); } 100% { transform: translateY(100vh); } }
-@keyframes playSprite {
-  100% { background-position: calc(var(--frame-width) * -6) 0px; }
+#modal-content {
+  background: #150020;
+  width: 90%; max-width: 450px; max-height: 80vh;
+  overflow-y: auto;
+  border: 2px solid var(--neon-purple);
+  border-radius: 20px;
+  padding: 25px;
+  color: white;
+  position: relative;
+  box-shadow: 0 0 30px rgba(189, 0, 255, 0.3);
 }
-@keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
-/* Responsividade Mobile */
+.shop-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px; margin-bottom: 10px;
+  background: rgba(255,255,255,0.05); border-radius: 10px;
+  border-left: 3px solid var(--neon-blue);
+}
+.shop-item button {
+  background: var(--neon-blue); border: none; padding: 8px 12px;
+  border-radius: 5px; cursor: pointer; font-weight: bold; color: #000;
+}
+
+#close-modal {
+  position: absolute; top: 15px; right: 15px;
+  background: var(--neon-pink); color: white; border: none;
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+}
+
+/* =========================================================================
+   5. RESPONSIVIDADE MOBILE
+   ========================================================================= */
+
 @media (max-width: 600px) {
-  #lunaris-sprite { transform: scale(0.55); bottom: 15%; left: 10%; }
-  .status-container { transform: scale(0.8); transform-origin: top left; }
-  #coins-display { transform: scale(0.8); transform-origin: top right; }
-  #bottom-dock { transform: scale(0.85); transform-origin: bottom center; bottom: 2%; }
-  .bar-bg { width: 120px; }
-  #mixer-dock { flex-direction: column; gap: 10px; }
-  .mixer-control input { width: 100%; }
+  /* Encolhe o gato para caber na tela pequena */
+  #lunaris-sprite {
+    transform: scale(0.45); /* Reduz para 45% do tamanho original */
+    bottom: 15%;
+    left: 5%;
+  }
+
+  /* Ajusta UI */
+  .status-container { transform: scale(0.85); transform-origin: top left; }
+  #coins-display { transform: scale(0.85); transform-origin: top right; }
+
+  /* Ajusta Dock Inferior */
+  #bottom-dock {
+    flex-wrap: wrap;
+    gap: 10px;
+    bottom: 2%;
+  }
+  #mixer-dock { display: none; /* Opcional: Esconder mixer no mobile se ficar apertado */ }
+  
+  .game-btn { padding: 10px 20px; font-size: 12px; }
 }
+
+/* Animações Genéricas */
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.98); } }
+@keyframes fall { 0% { transform: translateY(-100px); } 100% { transform: translateY(100vh); } }
+.rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.4); animation: fall linear infinite; }

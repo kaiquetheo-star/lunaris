@@ -1,11 +1,19 @@
 {
-  "name": "Lunaris Sessions",
+  "name": "Lunaris Echoes",
   "short_name": "Lunaris",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0d0614",
-  "theme_color": "#b026ff",
+  "orientation": "portrait",
+  "background_color": "#0a0010",
+  "theme_color": "#ff006e",
+  "description": "Um refúgio virtual lo-fi com seu companheiro felino.",
   "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "logo.png",
       "sizes": "512x512",

@@ -1,26 +1,95 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lunaris Echoes</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <div id="splash">
+        <img id="logo" src="logo.png" alt="Lunaris Echoes Logo">
+        <button id="start-btn">START</button>
+        <p style="color: #666; font-size: 12px; margin-top: 20px;">Recomendado: Use fones de ouvido 🎧</p>
+    </div>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    <div id="game-container">
+        
+        <div id="bg-room"></div>
+        
+        <div id="rain-layer">
+            <div class="rain-drop" style="left: 10%; animation-duration: 0.5s;"></div>
+            <div class="rain-drop" style="left: 30%; animation-duration: 0.7s;"></div>
+            <div class="rain-drop" style="left: 50%; animation-duration: 0.4s;"></div>
+            <div class="rain-drop" style="left: 70%; animation-duration: 0.6s;"></div>
+            <div class="rain-drop" style="left: 90%; animation-duration: 0.5s;"></div>
+        </div>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+        <div id="lunaris-sprite" class="state-idle"></div>
+
+        <div id="hitboxes-layer">
+            <div id="book-hitbox" title="Ler Diário"></div>
+            
+            <div id="switch-hitbox" title="Acender/Apagar Luz"></div>
+        </div>
+
+        <div id="room-darkness-overlay"></div>
+
+        <div id="ui-layer">
+            
+            <div class="status-container">
+                <div class="stat-row">
+                    <span class="stat-label">Fome</span>
+                    <div class="bar-bg"><div id="hunger-bar" class="bar" style="width: 100%;"></div></div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Vibe</span>
+                    <div class="bar-bg"><div id="vibe-bar" class="bar" style="width: 100%;"></div></div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Sono</span>
+                    <div class="bar-bg"><div id="sleep-bar" class="bar" style="width: 100%;"></div></div>
+                </div>
+            </div>
+
+            <div id="coins-display">🪙 <span id="coin-count">0</span></div>
+
+            <div id="bottom-dock">
+                <div id="mixer-dock">
+                    <div class="mixer-control">🌧️ <input type="range" id="vol-chuva" min="0" max="100" value="50"></div>
+                    <div class="mixer-control">🐱 <input type="range" id="vol-ronrono" min="0" max="100" value="50"></div>
+                    <div class="mixer-control">🎧 <input type="range" id="vol-lofi" min="0" max="100" value="40"></div>
+                </div>
+                
+                <button id="santuario-btn" class="game-btn">🕍 SANTUÁRIO</button>
+                <button id="sleep-btn" class="game-btn">🌙 DORMIR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-content">
+            <button id="close-modal">X</button>
+            <div id="modal-body">
+                </div>
+        </div>
+    </div>
+
+    <audio id="audio-lofi" src="track1.mp3" preload="auto"></audio>
+    <audio id="audio-chuva" src="chuva.mp3" loop preload="auto"></audio>
+    
+    <audio id="click-sfx" src="click.mp3" preload="auto"></audio>
+    <audio id="ronronar-sfx" src="ronronar.mp3" preload="auto"></audio>
+
+    <script src="script.js"></script>
+    
+    <script src="service-worker.js"></script>
+
+</body>
 </html>

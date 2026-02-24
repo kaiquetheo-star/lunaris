@@ -1,295 +1,301 @@
-// Cat state machine using CSS classes (state-idle, state-lick, state-eat, etc.)
-let catStateTimeout = null;
+/**
+ * LUNARIS ECHOES - CORE ENGINE (v2.0 Professional)
+ * Desenvolvido para funcionar com Spritesheet Único e Lógica Modular.
+ */
 
-function setCatState(stateName, durationMs = 0) {
-    const sprite = document.getElementById('lunaris-sprite');
-    if (!sprite) return; // safeguard if DOM not ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🌙 Lunaris Engine Iniciada: Sistemas Carregando...");
 
-    // Remove any class starting with 'state-'
-    sprite.className = sprite.className.replace(/\bstate-\S+/g, '');
-    // Force DOM reflow so the CSS animation restarts cleanly
-    void sprite.offsetWidth;
-    // Add new state
-    sprite.classList.add('state-' + stateName);
-
-    // clear existing timeout so rapid calls don't stack
-    if (catStateTimeout) { clearTimeout(catStateTimeout); catStateTimeout = null; }
-
-    if (durationMs > 0) {
-        catStateTimeout = setTimeout(() => {
-            // revert to resting state
-            sprite.className = sprite.className.replace(/\bstate-\S+/g, '');
-            sprite.classList.add(emFoco ? 'state-sleep' : 'state-idle');
-            catStateTimeout = null;
-        }, durationMs);
-    }
-}
-// 1. DADOS E LORE
-// ==========================================
-const paginasDiario = [
-    { titulo: "O Visitante da Meia-Noite", texto: "Dia 1. A chuva não para faz semanas e o neon da rua reflete nas poças lá fora. Não sei o que pesa mais, o céu cinza ou o silêncio insuportável aqui dentro. Hoje, deixei a janela entreaberta e ele entrou. Um gato preto, com olhos que parecem duas luas cheias. Ele não miou, não pediu nada. Só deitou na minha coberta roxa e me encarou. Desde que o Lunaris chegou, o silêncio do meu quarto deixou de ser solidão para virar... um refúgio. Acho que nós dois estávamos precisando de um lugar seguro.", custo: 0 },
-    { titulo: "Frequências Roxas", texto: "Dia 12. A depressão é um bicho estranho. Ela te convence de que você é invisível e te rouba a vontade de levantar da cama. Mas o Lunaris não deixa. Ele me acorda empurrando o potinho vazio, me obrigando a ficar de pé. É um passo pequeno, mas hoje foi o suficiente para eu colocar uma fita lo-fi antiga pra tocar. Notei algo mágico: o brilho nos olhos dele pulsa exatamente no ritmo dos graves. É como se ele estivesse filtrando a energia pesada do ambiente. Quando o som para, ele me olha pedindo mais. A música virou o nosso combustível.", custo: 50 },
-    { titulo: "O Guardião do Foco", texto: "Dia 28. A dor no peito ainda lateja de vez em quando, mas pela primeira vez em muito tempo, o apartamento não parece vazio. Hoje tive que trabalhar até tarde. Estava prestes a desistir quando senti o peso dele se aconchegando perto do meu teclado. O sono dele é profundo, mas sinto que é protetor. Percebi que, enquanto ele dorme e eu me concentro, o tempo flui mais leve. Somos uma equipe agora: eu sigo em frente criando o som, e ele mantém a paz.", custo: 110 },
-    { titulo: "Frequência de Cura", texto: "Dia 45. Tentei cantar hoje. Fazia tanto tempo que minha garganta parecia enferrujada. Eu sempre amei melodias mais quentes, aquele R&B mais sensual que preenche a sala, sabe? Mas a voz falhou no primeiro agudo. Fiquei frustrada, quase chorei. Foi quando o Lunaris pulou no meu colo e começou a ronronar em um tom baixo, contínuo. Fechei os olhos e apenas murmurei acompanhando a vibração dele. Não foi perfeito, mas foi um recomeço.", custo: 120 },
-    { titulo: "Neon e Chuva de Verão", texto: "Dia 60. O temporal de fim de tarde lavou a cidade. Da janela, vejo os fios de poste balançando e o letreiro da padaria piscando em vermelho lá embaixo. É uma beleza caótica, bem brasileira, mas que hoje me trouxe uma paz imensa. Fiz um café forte. O Lunaris ficou observando as gotas escorrendo pelo vidro, os olhos amarelos refletindo a luz da rua. O peso que eu carregava no peito está mais leve. Aos poucos, a cor está voltando para o meu mundo.", custo: 150 },
-    { titulo: "Sombras no Quarto", texto: "Dia 72. A espiral voltou. Acordei com aquela sensação de que nada faz sentido. Fiquei debaixo das cobertas até as três da tarde, ignorando o celular. Mas o Lunaris tem um sexto sentido para a tristeza. Ele não me forçou a levantar hoje. Apenas deitou no meu travesseiro, enrolado no meu cabelo, e ficou lá. Às vezes, a gente não precisa de alguém que nos puxe para fora do buraco, mas de alguém que sente no escuro com a gente até a luz voltar.", custo: 200 },
-    { titulo: "Papel e Caneta", texto: "Dia 88. Madrugada adentro. O teclado do notebook parece um piano, cada tecla um passo na direção dos meus projetos. Estou escrevendo de novo, rascunhando ideias, melodias, tentando colocar a vida nos trilhos e tirar os sonhos do papel. O Lunaris assumiu seu posto de guardião em cima da mesa de som. Quando perco o foco e começo a duvidar de mim mesma, ele me dá uma patadinha suave no braço. 'Volte para o papel', ele parece dizer. E eu volto.", custo: 250 },
-    { titulo: "Poeira Estelar", texto: "Dia 105. Eu juro que vi algo impossível hoje. A música estava alta, uma batida lo-fi com um baixo bem marcado e eu cantarolava uma letra por cima. O Lunaris bocejou e, por um segundo, os pelos dele pareceram soltar pequenas faíscas roxas, como poeira estelar flutuando no ar. Talvez seja o cansaço, a iluminação neon... ou talvez eu tenha adotado um pequeno espírito cósmico disfarçado de felino. De qualquer forma, não me sinto mais sozinha.", custo: 300 },
-    { titulo: "O Ritmo Próprio", texto: "Dia 130. Já não conto mais os dias de escuridão, estou contando os de luz. Minha rotina ganhou forma. Acordo, dou o sachê do Lunaris, abro a janela para o vento entrar e coloco a primeira fita para rodar. Descobri que a cura não é um milagre repentino, é um trabalho diário, como afinar um instrumento. O Lunaris me ensinou que o descanso não é preguiça, é preparação. Ele dorme sem culpa, e eu aprendi a me perdoar também.", custo: 400 },
-    { titulo: "Ecos do Universo", texto: "Dia 165. O quarto está diferente. Não porque mudei os móveis, mas porque a minha visão sobre ele mudou. As paredes roxas não são mais um esconderijo ou uma prisão, são o meu estúdio, meu templo. O Lunaris está enrodilhado no tapete, dormindo aquele sono profundo e protetor. Peguei o microfone de verdade hoje. Cantei, com falhas, com alma, com tudo que estava preso na garganta. E pela primeira vez, eu não cantei para a tristeza. Cantei para o amanhã.", custo: 500 }
-];
-
-// ==========================================
-// 2. ESTADO DO JOGO
-// ==========================================
-let stats = {
-    hunger: parseFloat(localStorage.getItem('lun_fome')) || 100,
-    vibe: parseFloat(localStorage.getItem('lun_vibe')) || 100,
-    sleep: parseFloat(localStorage.getItem('lun_sono')) || 100,
-    coins: parseInt(localStorage.getItem('lun_coins')) || 0
-};
-
-
-let paginasDesbloqueadas = parseInt(localStorage.getItem('lun_paginas')) || 1;
-let emFoco = false;
-let isLightsOn = true; // room light state
-let gatoCooldown = false; // Controle de tempo para ganhar moedas
-
-let medals = JSON.parse(localStorage.getItem('lun_medals')) || { plant: false, fish: false, music: false, diary: false };
-
-function saveMedals() { localStorage.setItem('lun_medals', JSON.stringify(medals)); }
-
-// playlist logic for lofi tracks
-const playlist = ['track1.mp3', 'track2.mp3', 'track3.mp3', 'track4.mp3'];
-let currentTrackIndex = 0;
-
-// Função global de clique
-function playClick() {
-    const sfx = document.getElementById('click-sfx');
-    sfx.currentTime = 0;
-    sfx.play().catch(()=>{});
-}
-
-// ==========================================
-// 3. SISTEMA PRINCIPAL E AUDIO
-// ==========================================
-document.getElementById('start-btn').addEventListener('click', () => {
-    document.getElementById('splash').classList.add('hidden');
-    playClick();
-    iniciarAudio();
-    gerarChuva();
-});
-
-function iniciarAudio() {
-    const lofi = document.getElementById('audio-lofi');
-    const chuva = document.getElementById('audio-chuva');
-    const ronrono = document.getElementById('audio-ronrono');
+    // =========================================================================
+    // 1. ESTADO GLOBAL E DADOS (DATABASE)
+    // =========================================================================
     
-    // playlist cycle for lofi
-    lofi.src = playlist[currentTrackIndex];
-    lofi.addEventListener('ended', () => {
-        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-        lofi.src = playlist[currentTrackIndex];
-        lofi.play().catch(()=>{});
-    });
+    // Estado do Jogo
+    const gameState = {
+        coins: 150, // Começa com um troco pra testar a loja
+        emFoco: false, // Modo Dormir
+        stats: {
+            hunger: 100,
+            vibe: 100,
+            sleep: 100
+        },
+        unlockedPages: 1, // Quantas páginas do diário o jogador tem
+        currentTrackIndex: 0
+    };
 
-    // Inicia todas as tracks (volumes baseados nos sliders)
-    lofi.volume = document.getElementById('vol-lofi').value / 100;
-    chuva.volume = document.getElementById('vol-chuva').value / 100;
-    ronrono.volume = document.getElementById('vol-ronrono').value / 100;
+    // Banco de Dados: Lore do Diário
+    const diaryEntries = [
+        { title: "Dia 1: A Chegada", text: "Ele apareceu na janela durante a tempestade de neon. Olhos grandes, refletindo a cidade. Decidi chamá-lo de Lunaris." },
+        { title: "Dia 2: Frequências", text: "Percebi que ele reage às frequências Lo-Fi. O ronronar dele parece vibrar no mesmo BPM das músicas." },
+        { title: "Dia 3: O Visitante", text: "Achei um bilhete estranho debaixo da porta. Dizia apenas: 'Cuidado com a estática'." },
+        { title: "Dia 4: Sincronia", text: "Quando estou focado programando, ele dorme. Quando estou ansioso, ele pede carinho. Estamos conectados." },
+        { title: "Dia 5: Glitch", text: "Por um segundo, vi o Lunaris pixelizar no ar. Devo estar trabalhando demais." },
+        { title: "Dia 6: A Loja", text: "Descobri um canal na dark web que vende sachês quânticos. O que está acontecendo?" }
+    ];
 
-    lofi.play().catch(()=>{});
-    chuva.play().catch(()=>{});
-    ronrono.play().catch(()=>{});
+    // Banco de Dados: Playlist Lo-Fi
+    const playlist = [
+        'track1.mp3',
+        'track2.mp3',
+        'track3.mp3',
+        'track4.mp3'
+    ];
 
-    setInterval(drenarStats, 60000); 
-}
+    // Timer para loops de jogo
+    let gameLoopInterval;
+    let catAnimationTimer;
 
-function drenarStats() {
-    stats.hunger = Math.max(0, stats.hunger - 1);
-    stats.vibe = Math.max(0, stats.vibe - 0.5);
-    if (!emFoco) stats.sleep = Math.max(0, stats.sleep - 0.8);
-    atualizarUI();
-}
+    // =========================================================================
+    // 2. SISTEMA DE AUDIO (AUDIO MANAGER)
+    // =========================================================================
 
-function atualizarUI() {
-    document.getElementById('hunger-bar').style.width = stats.hunger + '%';
-    document.getElementById('vibe-bar').style.width = stats.vibe + '%';
-    document.getElementById('sleep-bar').style.width = stats.sleep + '%';
-    document.getElementById('coin-count').innerText = stats.coins;
-    
-    localStorage.setItem('lun_fome', stats.hunger);
-    localStorage.setItem('lun_vibe', stats.vibe);
-    localStorage.setItem('lun_sono', stats.sleep);
-    localStorage.setItem('lun_coins', stats.coins);
-    localStorage.setItem('lun_paginas', paginasDesbloqueadas);
-}
+    const audioManager = {
+        bgm: document.getElementById('audio-lofi'),
+        sfxClick: document.getElementById('click-sfx'),
+        sfxPurr: document.getElementById('ronronar-sfx'),
+        sfxRain: document.getElementById('audio-chuva'),
 
-// Sliders de Volume
-['chuva','lofi','ronrono'].forEach(id => {
-    const slider = document.getElementById('vol-' + id);
-    const audio = document.getElementById('audio-' + id);
-    const handler = (e) => { audio.volume = e.target.value / 100; };
-    slider.addEventListener('input', handler);
-    slider.addEventListener('change', handler);
-});
+        init() {
+            // Configura playlist automática
+            if (this.bgm) {
+                this.bgm.volume = 0.4;
+                this.bgm.addEventListener('ended', () => this.nextTrack());
+            }
+            if (this.sfxRain) this.sfxRain.volume = 0.5;
+        },
 
-// sleep/focus toggle button logic
-const sleepBtn = document.getElementById('sleep-btn');
-sleepBtn.addEventListener('click', () => {
-    emFoco = !emFoco;
-    const sprite = document.getElementById('lunaris-sprite');
-    const lofi = document.getElementById('audio-lofi');
-    if (emFoco) {
-        // going to sleep
-        setCatState('sleep');
-        sleepBtn.textContent = '☀️ ACORDAR';
-        sprite.style.filter = 'brightness(0.4)';
-        lofi.pause();
-    } else {
-        // waking up
-        setCatState('stretch', 3000);
-        sleepBtn.textContent = '🌙 DORMIR';
-        sprite.style.filter = '';
-        lofi.play().catch(()=>{});
-    }
-});
+        playClick() {
+            if (this.sfxClick) {
+                this.sfxClick.currentTime = 0;
+                this.sfxClick.play().catch(() => {});
+            }
+        },
 
-// A REGRA DE OURO DO LUNARIS (Sem som de clique no gato)
-document.getElementById('lunaris-sprite').addEventListener('click', () => {
-    // switch to licking animation briefly
-    setCatState('lick', 2000);
+        playPurr() {
+            if (this.sfxPurr) {
+                this.sfxPurr.currentTime = 0;
+                this.sfxPurr.play().catch(() => {});
+            }
+        },
 
-    // Só recompensa se estiver saudável
-    if (stats.hunger >= 90 && stats.vibe >= 90 && stats.sleep >= 90) {
-        if (!gatoCooldown) {
-            stats.coins += 20;
-            atualizarUI();
-            
-            // Um toque de feedback visual fofo
-            const sprite = document.getElementById('lunaris-sprite');
-            sprite.style.filter = "drop-shadow(0 0 40px #00ff00)";
-            setTimeout(() => sprite.style.filter = "drop-shadow(0 0 20px rgba(255, 0, 110, 0.5))", 1000);
-            
-            gatoCooldown = true;
-            setTimeout(() => { gatoCooldown = false; }, 60000); // 1 minuto de recarga
-        }
-    }
-});
+        nextTrack() {
+            if (!this.bgm) return;
+            gameState.currentTrackIndex = (gameState.currentTrackIndex + 1) % playlist.length;
+            this.bgm.src = playlist[gameState.currentTrackIndex];
+            this.bgm.play().catch(e => console.log("Autoplay bloqueado:", e));
+        },
 
-// Foco
-window.addEventListener('blur', () => { emFoco = true; });
-window.addEventListener('focus', () => { emFoco = false; });
-atualizarUI();
-
-// ==========================================
-// 4. EFEITO DE CHUVA
-// ==========================================
-function gerarChuva() {
-    const rainContainer = document.getElementById('rain-layer');
-    for (let i = 0; i < 50; i++) {
-        let drop = document.createElement('div');
-        drop.classList.add('rain-drop');
-        drop.style.left = Math.random() * 100 + 'vw';
-        drop.style.animationDuration = Math.random() * 1 + 0.5 + 's';
-        drop.style.animationDelay = Math.random() * 2 + 's';
-        rainContainer.appendChild(drop);
-    }
-}
-
-// ==========================================
-// 5. MODAL DO SANTUÁRIO
-// ==========================================
-const santuarioBtn = document.getElementById('santuario-btn');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalBody = document.getElementById('modal-body');
-const closeModalBtn = document.getElementById('close-modal');
-
-function openSantuarioModal() {
-    playClick();
-    
-    const shopSection = document.createElement('div');
-    shopSection.className = 'modal-section';
-    shopSection.innerHTML = `
-        <h2 style="color: #00ffff;">🛒 Loja do Quarto</h2>
-        <div class="shop-item"><span>🍖 Sachê (Fome 100%) - 20 🪙</span><button id="buy-sache">Comprar</button></div>
-        <div class="shop-item"><span>🎵 Nova Fita Lo-Fi - 100 🪙</span><button id="buy-track">Comprar</button></div>
-    `;
-
-    modalBody.innerHTML = '';
-    modalBody.appendChild(shopSection);
-
-    // Botões
-    document.getElementById('buy-sache').onclick = function() {
-        playClick();
-        if (stats.coins >= 20) {
-            stats.coins -= 20;
-            stats.hunger = 100;
-            atualizarUI();
-            setCatState('eat', 5000);
-            alert('Lunaris alimentado!');
-        } else {
-            alert('Moedas insuficientes!');
+        toggleSleepMode(isSleeping) {
+            if (!this.bgm) return;
+            if (isSleeping) {
+                this.bgm.pause();
+            } else {
+                this.bgm.play().catch(() => {});
+            }
         }
     };
 
-    document.getElementById('buy-track').onclick = function() {
-        playClick();
-        if (stats.coins >= 100) {
-            stats.coins -= 100;
-            medals.music = true;
-            saveMedals();
-            atualizarUI();
-            alert('Nova faixa desbloqueada!');
+    // Inicializa o som
+    audioManager.init();
+
+    // =========================================================================
+    // 3. MOTOR DE ANIMAÇÃO (SPRITE ENGINE) - CORRIGIDO
+    // =========================================================================
+
+    function setCatState(stateName, durationMs = 0) {
+        const sprite = document.getElementById('lunaris-sprite');
+        if (!sprite) return;
+
+        // 1. Limpeza Radical: Remove todas as classes de estado anteriores
+        // Isso impede que ele fique com 'state-idle' e 'state-eat' ao mesmo tempo
+        sprite.className = ''; 
+        
+        // 2. Reflow Mágico: Força o navegador a reiniciar a renderização CSS
+        // Sem isso, a animação não "reseta" do quadro 0
+        void sprite.offsetWidth; 
+
+        // 3. Aplica o novo estado
+        sprite.classList.add('state-' + stateName);
+        console.log(`🐱 Gato mudou para: ${stateName}`);
+
+        // 4. Se for uma ação temporária (comer, lamber), volta pro estado anterior
+        if (durationMs > 0) {
+            // Limpa timer anterior para não encavalar animações
+            if (catAnimationTimer) clearTimeout(catAnimationTimer);
+
+            catAnimationTimer = setTimeout(() => {
+                const defaultState = gameState.emFoco ? 'sleep' : 'idle';
+                setCatState(defaultState);
+            }, durationMs);
+        }
+    }
+
+    // Inicializa o gato no estado padrão
+    setCatState('idle');
+
+    // =========================================================================
+    // 4. LÓGICA DO JOGO (GAME LOOP & ECONOMY)
+    // =========================================================================
+
+    function updateUI() {
+        // Atualiza moedas
+        const coinDisplay = document.getElementById('coin-count'); // Ajuste conforme seu HTML
+        if (coinDisplay) coinDisplay.innerText = gameState.coins;
+        
+        // Atualiza barras (se existirem)
+        updateBar('hunger-bar', gameState.stats.hunger);
+        updateBar('vibe-bar', gameState.stats.vibe);
+        updateBar('sleep-bar', gameState.stats.sleep);
+    }
+
+    function updateBar(id, value) {
+        const bar = document.getElementById(id);
+        if (bar) bar.style.width = value + '%';
+    }
+
+    function earnCoins(amount) {
+        gameState.coins += amount;
+        updateUI();
+        showFloatingText(`+${amount}🪙`, 'gold');
+    }
+
+    function showFloatingText(text, color) {
+        const sprite = document.getElementById('lunaris-sprite');
+        if (!sprite) return;
+        
+        const floatEl = document.createElement('div');
+        floatEl.innerText = text;
+        floatEl.style.position = 'absolute';
+        floatEl.style.left = (sprite.offsetLeft + 100) + 'px'; // Centralizado no gato
+        floatEl.style.top = sprite.offsetTop + 'px';
+        floatEl.style.color = color;
+        floatEl.style.fontWeight = 'bold';
+        floatEl.style.fontSize = '24px';
+        floatEl.style.textShadow = '0 0 5px black';
+        floatEl.style.pointerEvents = 'none';
+        floatEl.style.transition = 'all 1s ease-out';
+        floatEl.style.zIndex = '100';
+
+        document.body.appendChild(floatEl);
+
+        // Anima subindo e desaparecendo
+        requestAnimationFrame(() => {
+            floatEl.style.top = (sprite.offsetTop - 50) + 'px';
+            floatEl.style.opacity = '0';
+        });
+
+        setTimeout(() => floatEl.remove(), 1000);
+    }
+
+    // Loop de decadência de status (Fome/Sono cai com o tempo)
+    gameLoopInterval = setInterval(() => {
+        if (gameState.emFoco) return; // Não perde status dormindo
+
+        // Decadência leve
+        if (gameState.stats.hunger > 0) gameState.stats.hunger -= 0.5;
+        if (gameState.stats.vibe > 0) gameState.stats.vibe -= 0.2;
+        
+        updateUI();
+    }, 5000); // A cada 5 segundos
+
+    // =========================================================================
+    // 5. SISTEMA DE MODAIS (LOJA E DIÁRIO)
+    // =========================================================================
+
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalBody = document.getElementById('modal-body');
+    const closeModalBtn = document.getElementById('close-modal');
+
+    function openModal(contentHTML) {
+        if (!modalOverlay || !modalBody) return;
+        modalBody.innerHTML = contentHTML;
+        modalOverlay.classList.remove('hidden');
+        modalOverlay.style.display = 'flex'; // Garante que apareça
+    }
+
+    function closeModal() {
+        if (!modalOverlay) return;
+        modalOverlay.classList.add('hidden');
+        setTimeout(() => { modalOverlay.style.display = 'none'; }, 300); // Espera fade out
+    }
+
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+
+    // --- FUNÇÕES DA LOJA ---
+    function openShop() {
+        let html = `<h2>🕍 Santuário (Loja)</h2>`;
+        
+        // Item 1: Sachê
+        html += `
+        <div class="shop-item">
+            <div>
+                <strong>🐟 Sachê Quântico</strong><br>
+                <small>Recupera 50 de Fome. O gato adora.</small>
+            </div>
+            <button onclick="window.buyItem('food', 20)">Comprar (20🪙)</button>
+        </div>`;
+
+        // Item 2: Página do Diário
+        if (gameState.unlockedPages < diaryEntries.length) {
+            html += `
+            <div class="shop-item">
+                <div>
+                    <strong>📜 Página Perdida</strong><br>
+                    <small>Desbloqueia um novo segredo do diário.</small>
+                </div>
+                <button onclick="window.buyItem('diary', 100)">Comprar (100🪙)</button>
+            </div>`;
         } else {
-            alert('Moedas insuficientes!');
+            html += `<div class="shop-item"><em>Diário Completo! Você sabe tudo.</em></div>`;
+        }
+
+        openModal(html);
+    }
+
+    // Função Global para ser acessada pelo HTML do Modal
+    window.buyItem = function(type, price) {
+        if (gameState.coins >= price) {
+            gameState.coins -= price;
+            audioManager.playClick();
+            
+            if (type === 'food') {
+                gameState.stats.hunger = Math.min(100, gameState.stats.hunger + 50);
+                setCatState('eat', 4000); // Animação de comer
+                showFloatingText("Nham!", "#00ff00");
+                closeModal();
+            } else if (type === 'diary') {
+                gameState.unlockedPages++;
+                showFloatingText("Nova Página!", "#ff00ff");
+                openShop(); // Reabre pra atualizar a lista
+            }
+            updateUI();
+        } else {
+            alert("Sem moedas suficientes! Clique no gato para ganhar mais.");
         }
     };
 
-    modalOverlay.classList.remove('hidden');
-}
+    // --- FUNÇÕES DO DIÁRIO ---
+    function openDiary() {
+        let html = `<h2>📖 O Diário de Lunaris</h2>`;
+        
+        for (let i = 0; i < gameState.unlockedPages; i++) {
+            const entry = diaryEntries[i];
+            html += `
+            <div class="modal-section" style="margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                <h3 style="color: #00ffff; margin-bottom: 5px;">${entry.title}</h3>
+                <p style="font-style: italic; color: #ddd;">"${entry.text}"</p>
+            </div>`;
+        }
 
-santuarioBtn.addEventListener('click', openSantuarioModal);
-closeModalBtn.addEventListener('click', () => { playClick(); modalOverlay.classList.add('hidden'); });
-modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) { playClick(); modalOverlay.classList.add('hidden'); } });
-
-// diary modal helper
-function openDiaryModal() {
-    playClick();
-    modalBody.innerHTML = '';
-    const diarySection = document.createElement('div');
-    diarySection.className = 'modal-section';
-    diarySection.innerHTML = `<h2 style="color: #ff00ff;">📖 Diário de Lunaris</h2>`;
-    const pagesDiv = document.createElement('div');
-    pagesDiv.id = 'diary-pages';
-    diarySection.appendChild(pagesDiv);
-
-    for (let i = 0; i < paginasDesbloqueadas; i++) {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'diary-page unlocked';
-        pageDiv.innerHTML = `<strong style=\"color:#ff006e;\">${paginasDiario[i].titulo}</strong><p>${paginasDiario[i].texto}</p>`;
-        pagesDiv.appendChild(pageDiv);
+        openModal(html);
     }
 
-    modalBody.appendChild(diarySection);
-    modalOverlay.classList.remove('hidden');
-}
+    // =========================================================================
+    // 6. INTERAÇÃO E EVENT LISTENERS (INPUTS)
+    // =========================================================================
 
-// hitbox interaction
-const bookHitbox = document.getElementById('book-hitbox');
-if (bookHitbox) {
-    bookHitbox.addEventListener('click', () => {
-        playClick();
-        openDiaryModal();
-    });
-}
-
-// light switch hitbox
-const switchHitbox = document.getElementById('switch-hitbox');
-if (switchHitbox) {
-    switchHitbox.addEventListener('click', () => {
-        const sfx = document.getElementById('click-sfx');
-        sfx.currentTime = 0; sfx.play().catch(()=>{});
-        document.getElementById('game-container').classList.toggle('lights-out');
-    });
-}
+    // --- O GATO (CLIQUE) ---
+    const sprite = document.getElementById('lunaris-sprite');
+    if (sprite) {
+        sprite.addEventListener('click', () => {
+            if (gameState.emFoco) return; // Não acorda ele
